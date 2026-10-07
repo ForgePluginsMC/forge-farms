@@ -13,7 +13,22 @@ item:
 farm:
   base-radius: 4
   tick-interval: 100
-  growth-attempts: 10
+  growth-attempts: 16
+  # Ages added per growth sample. Higher = visibly faster growth.
+  age-per-sample: 1
+  # When true, every tick sweeps the whole radius for harvest-ready blocks
+  # (up to max-harvests-per-tick) — this is what makes a maxed farm dramatic.
+  harvest-sweep: true
+  max-harvests-per-tick: 24
+# Particles/sounds on harvest and growth. Use NONE (or delete the line) to disable.
+effects:
+  harvest-particle: HAPPY_VILLAGER
+  harvest-particle-count: 10
+  harvest-sound: BLOCK_CROP_BREAK
+  harvest-sound-volume: 0.7
+  harvest-sound-pitch: 1.0
+  growth-particle: COMPOSTER
+  growth-particle-count: 5
 storage:
   base-slots: 27
 fuel:

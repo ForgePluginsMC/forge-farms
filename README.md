@@ -110,7 +110,7 @@ prices:               # per-item auto-sell prices (needs Vault + economy)
   WHEAT: 1.0
 ```
 
-`farm-types/<id>.yml` — one file per farm type: display name, core block, item, base radius / tick interval / growth attempts / storage slots, fuel items and burn time, harvestable blocks with behaviors (`AGEABLE_CROP`, `STEM_FRUIT`, `STALK`), tree-farming toggle with allowed saplings, offline catch-up cap, hologram lines with placeholders (`{owner}`, `{type}`, `{fuel}`, `{fuel_percent}`, `{storage_used}`, `{storage_slots}`, `{radius}`), and the four upgrade tracks with per-level effects and costs.
+`farm-types/<id>.yml` — one file per farm type: display name, core block, item, base radius / tick interval / growth attempts / storage slots, fuel items and burn time, harvestable blocks with behaviors (`AGEABLE_CROP`, `STEM_FRUIT`, `STALK`), tree-farming toggle with allowed saplings, offline catch-up cap, hologram lines with placeholders (`{owner}`, `{type}`, `{fuel}`, `{fuel_percent}`, `{storage_used}`, `{storage_slots}`, `{radius}`), drama tuning (`age-per-sample`, `harvest-sweep`, `max-harvests-per-tick`, and an `effects:` block with harvest/growth particles and sounds), and the four upgrade tracks with per-level effects and costs.
 
 ### Upgrade tracks
 

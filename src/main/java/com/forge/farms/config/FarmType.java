@@ -10,6 +10,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +33,9 @@ public final class FarmType {
     private final int baseRadius;
     private final long baseTickInterval;
     private final int growthAttempts;
+    private final int agePerSample;
+    private final boolean harvestSweep;
+    private final int maxHarvestsPerTick;
     private final int baseStorageSlots;
     private final Set<Material> fuelItems;
     private final long fuelTicksPerItem;
@@ -40,6 +46,13 @@ public final class FarmType {
     private final boolean hologramDefault;
     private final List<String> hologramLines;
     private final Map<TrackType, UpgradeTrack> upgrades;
+    private final @Nullable Particle harvestParticle;
+    private final int harvestParticleCount;
+    private final @Nullable Sound harvestSound;
+    private final float harvestSoundVolume;
+    private final float harvestSoundPitch;
+    private final @Nullable Particle growthParticle;
+    private final int growthParticleCount;
 
     private FarmType(Builder b) {
         this.id = b.id;
@@ -62,6 +75,16 @@ public final class FarmType {
         this.hologramDefault = b.hologramDefault;
         this.hologramLines = Collections.unmodifiableList(new ArrayList<>(b.hologramLines));
         this.upgrades = Collections.unmodifiableMap(new EnumMap<>(b.upgrades));
+        this.agePerSample = b.agePerSample;
+        this.harvestSweep = b.harvestSweep;
+        this.maxHarvestsPerTick = b.maxHarvestsPerTick;
+        this.harvestParticle = b.harvestParticle;
+        this.harvestParticleCount = b.harvestParticleCount;
+        this.harvestSound = b.harvestSound;
+        this.harvestSoundVolume = b.harvestSoundVolume;
+        this.harvestSoundPitch = b.harvestSoundPitch;
+        this.growthParticle = b.growthParticle;
+        this.growthParticleCount = b.growthParticleCount;
     }
 
     public String id() {
@@ -104,6 +127,21 @@ public final class FarmType {
         return growthAttempts;
     }
 
+    /** Ages added each time a crop is sampled (default 1). */
+    public int agePerSample() {
+        return agePerSample;
+    }
+
+    /** When true, each tick sweeps the radius for harvest-ready blocks. */
+    public boolean harvestSweep() {
+        return harvestSweep;
+    }
+
+    /** Cap on harvests per tick (sampling + sweep). 0 = unlimited. */
+    public int maxHarvestsPerTick() {
+        return maxHarvestsPerTick;
+    }
+
     public int baseStorageSlots() {
         return baseStorageSlots;
     }
@@ -142,6 +180,34 @@ public final class FarmType {
 
     public @Nullable UpgradeTrack upgradeTrack(TrackType type) {
         return upgrades.get(type);
+    }
+
+    public @Nullable Particle harvestParticle() {
+        return harvestParticle;
+    }
+
+    public int harvestParticleCount() {
+        return harvestParticleCount;
+    }
+
+    public @Nullable Sound harvestSound() {
+        return harvestSound;
+    }
+
+    public float harvestSoundVolume() {
+        return harvestSoundVolume;
+    }
+
+    public float harvestSoundPitch() {
+        return harvestSoundPitch;
+    }
+
+    public @Nullable Particle growthParticle() {
+        return growthParticle;
+    }
+
+    public int growthParticleCount() {
+        return growthParticleCount;
     }
 
     /** Radius in blocks at the given radius-track level (0 = base). */
@@ -206,7 +272,17 @@ public final class FarmType {
         b.baseRadius = Math.max(1, c.getInt("farm.base-radius", 4));
         b.baseTickInterval = Math.max(1L, c.getLong("farm.tick-interval", 100L));
         b.growthAttempts = Math.max(1, c.getInt("farm.growth-attempts", 10));
+        b.agePerSample = Math.max(1, c.getInt("farm.age-per-sample", 1));
+        b.harvestSweep = c.getBoolean("farm.harvest-sweep", false);
+        b.maxHarvestsPerTick = Math.max(0, c.getInt("farm.max-harvests-per-tick", 24));
         b.baseStorageSlots = Math.max(1, c.getInt("storage.base-slots", 27));
+        b.harvestParticle = parseParticle(c.getString("effects.harvest-particle"), file);
+        b.harvestParticleCount = Math.max(1, c.getInt("effects.harvest-particle-count", 8));
+        b.harvestSound = parseSound(c.getString("effects.harvest-sound"), file);
+        b.harvestSoundVolume = (float) c.getDouble("effects.harvest-sound-volume", 0.6);
+        b.harvestSoundPitch = (float) c.getDouble("effects.harvest-sound-pitch", 1.1);
+        b.growthParticle = parseParticle(c.getString("effects.growth-particle"), file);
+        b.growthParticleCount = Math.max(1, c.getInt("effects.growth-particle-count", 4));
         for (String s : c.getStringList("fuel.items")) {
             b.fuelItems.add(material(s, file, "fuel.items"));
         }
@@ -294,6 +370,32 @@ public final class FarmType {
         return 0;
     }
 
+    private static @Nullable Particle parseParticle(@Nullable String name, File file) {
+        if (name == null || name.isBlank() || name.equalsIgnoreCase("none")) {
+            return null;
+        }
+        try {
+            return Particle.valueOf(name.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(file.getName() + ": unknown particle '" + name + "'");
+        }
+    }
+
+    private static @Nullable Sound parseSound(@Nullable String name, File file) {
+        if (name == null || name.isBlank() || name.equalsIgnoreCase("none")) {
+            return null;
+        }
+        // Sound.valueOf is deprecated for removal in 26.3; the registry is
+        // the supported path. Enum names map to keys: BLOCK_CROP_BREAK ->
+        // minecraft:block.crop_break.
+        Sound sound = org.bukkit.Registry.SOUNDS.get(
+                NamespacedKey.minecraft(name.toLowerCase(Locale.ROOT).replace('_', '.')));
+        if (sound == null) {
+            throw new IllegalArgumentException(file.getName() + ": unknown sound '" + name + "'");
+        }
+        return sound;
+    }
+
     private static int toInt(@Nullable Object o) {
         if (o instanceof Number n) {
             return n.intValue();
@@ -312,6 +414,9 @@ public final class FarmType {
         int baseRadius = 4;
         long baseTickInterval = 100L;
         int growthAttempts = 10;
+        int agePerSample = 1;
+        boolean harvestSweep = false;
+        int maxHarvestsPerTick = 24;
         int baseStorageSlots = 27;
         Set<Material> fuelItems = new HashSet<>();
         long fuelTicksPerItem = 1200L;
@@ -322,5 +427,12 @@ public final class FarmType {
         boolean hologramDefault = true;
         List<String> hologramLines = new ArrayList<>();
         Map<TrackType, UpgradeTrack> upgrades = new EnumMap<>(TrackType.class);
+        @Nullable Particle harvestParticle = null;
+        int harvestParticleCount = 8;
+        @Nullable Sound harvestSound = null;
+        float harvestSoundVolume = 0.6f;
+        float harvestSoundPitch = 1.1f;
+        @Nullable Particle growthParticle = null;
+        int growthParticleCount = 4;
     }
 }

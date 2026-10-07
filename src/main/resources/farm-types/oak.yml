@@ -17,6 +17,15 @@ farm:
   base-radius: 5
   tick-interval: 200
   growth-attempts: 4
+  age-per-sample: 1
+  harvest-sweep: false
+  max-harvests-per-tick: 16
+effects:
+  harvest-particle: HAPPY_VILLAGER
+  harvest-particle-count: 12
+  harvest-sound: BLOCK_GRASS_BREAK
+  harvest-sound-volume: 0.8
+  harvest-sound-pitch: 0.9
 storage:
   base-slots: 27
 fuel:

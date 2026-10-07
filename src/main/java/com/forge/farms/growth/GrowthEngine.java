@@ -72,9 +72,13 @@ public final class GrowthEngine {
         fuelEmptyNotified.remove(farm.id());
 
         int radius = type.radiusAt(farm.radiusLevel());
+        int budget = type.maxHarvestsPerTick() <= 0 ? Integer.MAX_VALUE : type.maxHarvestsPerTick();
         List<ItemStack> harvested = new ArrayList<>();
         for (int i = 0; i < type.growthAttempts(); i++) {
-            sample(farm, type, world, core, radius, harvested);
+            budget = sample(farm, type, world, core, radius, harvested, budget);
+        }
+        if (type.harvestSweep() && budget > 0) {
+            budget = sweep(type, world, core, radius, harvested, budget);
         }
         if (!harvested.isEmpty()) {
             FarmHarvestEvent event = new FarmHarvestEvent(farm, harvested);
@@ -113,47 +117,81 @@ public final class GrowthEngine {
         }
     }
 
-    private void sample(Farm farm, FarmType type, World world, Location core, int radius,
-            List<ItemStack> harvested) {
+    /** One random sample. Returns the remaining harvest budget. */
+    private int sample(Farm farm, FarmType type, World world, Location core, int radius,
+            List<ItemStack> harvested, int budget) {
         int dx = random.nextInt(radius * 2 + 1) - radius;
         int dz = random.nextInt(radius * 2 + 1) - radius;
         if (dx * dx + dz * dz > radius * radius) {
-            return;
+            return budget;
         }
         int dy = random.nextInt(7) - 3;
         Block block = world.getBlockAt(core.getBlockX() + dx, core.getBlockY() + dy, core.getBlockZ() + dz);
         for (Harvestable h : type.harvestables()) {
             if (block.getType() == h.material()) {
-                applyBehavior(h.behavior(), block, harvested);
-                return;
+                if (budget > 0 && tryHarvest(type, h, block, harvested)) {
+                    budget--;
+                } else {
+                    tryGrow(type, h, block);
+                }
+                return budget;
             }
         }
+        return budget;
     }
 
-    private void applyBehavior(HarvestBehavior behavior, Block block, List<ItemStack> harvested) {
-        switch (behavior) {
+    /**
+     * Full-radius sweep for harvest-ready blocks. This is what makes a
+     * maxed farm look dramatic: whole waves of crops pop at once.
+     * Returns the remaining harvest budget.
+     */
+    private int sweep(FarmType type, World world, Location core, int radius,
+            List<ItemStack> harvested, int budget) {
+        int cx = core.getBlockX();
+        int cy = core.getBlockY();
+        int cz = core.getBlockZ();
+        for (int dx = -radius; dx <= radius && budget > 0; dx++) {
+            for (int dz = -radius; dz <= radius && budget > 0; dz++) {
+                if (dx * dx + dz * dz > radius * radius) {
+                    continue;
+                }
+                for (int dy = -2; dy <= 3 && budget > 0; dy++) {
+                    Block block = world.getBlockAt(cx + dx, cy + dy, cz + dz);
+                    for (Harvestable h : type.harvestables()) {
+                        if (block.getType() == h.material() && tryHarvest(type, h, block, harvested)) {
+                            budget--;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return budget;
+    }
+
+    /** Harvest the block if it is ready. Returns true when something was harvested. */
+    private boolean tryHarvest(FarmType type, Harvestable h, Block block, List<ItemStack> harvested) {
+        boolean got;
+        switch (h.behavior()) {
             case AGEABLE_CROP -> {
                 BlockData data = block.getBlockData();
-                if (!(data instanceof Ageable ageable)) {
-                    return;
+                if (!(data instanceof Ageable ageable) || ageable.getAge() < ageable.getMaximumAge()) {
+                    return false;
                 }
-                if (ageable.getAge() < ageable.getMaximumAge()) {
-                    ageable.setAge(ageable.getAge() + 1);
-                    block.setBlockData(ageable);
-                } else {
-                    harvested.addAll(block.getDrops());
-                    ageable.setAge(0);
-                    block.setBlockData(ageable);
-                }
+                harvested.addAll(block.getDrops());
+                ageable.setAge(0);
+                block.setBlockData(ageable);
+                got = true;
             }
             case STEM_FRUIT -> {
                 harvested.addAll(block.getDrops());
                 block.setType(Material.AIR);
+                got = true;
             }
             case STALK -> {
                 Block below = block.getRelative(org.bukkit.block.BlockFace.DOWN);
                 if (below.getType() != block.getType()) {
-                    return; // base block: leave it to regrow
+                    return false;
                 }
                 Material stalk = block.getType();
                 Block cursor = block;
@@ -162,7 +200,44 @@ public final class GrowthEngine {
                     cursor.setType(Material.AIR);
                     cursor = cursor.getRelative(org.bukkit.block.BlockFace.UP);
                 }
+                got = true;
             }
+            default -> {
+                return false;
+            }
+        }
+        if (got) {
+            harvestEffects(type, block);
+        }
+        return got;
+    }
+
+    /** Accelerate a growing crop. Returns true when it aged up. */
+    private boolean tryGrow(FarmType type, Harvestable h, Block block) {
+        if (h.behavior() != HarvestBehavior.AGEABLE_CROP) {
+            return false;
+        }
+        BlockData data = block.getBlockData();
+        if (!(data instanceof Ageable ageable) || ageable.getAge() >= ageable.getMaximumAge()) {
+            return false;
+        }
+        ageable.setAge(Math.min(ageable.getMaximumAge(), ageable.getAge() + type.agePerSample()));
+        block.setBlockData(ageable);
+        if (type.growthParticle() != null) {
+            block.getWorld().spawnParticle(type.growthParticle(),
+                    block.getLocation().add(0.5, 0.6, 0.5), type.growthParticleCount());
+        }
+        return true;
+    }
+
+    private void harvestEffects(FarmType type, Block block) {
+        World world = block.getWorld();
+        Location at = block.getLocation().add(0.5, 0.5, 0.5);
+        if (type.harvestParticle() != null) {
+            world.spawnParticle(type.harvestParticle(), at, type.harvestParticleCount());
+        }
+        if (type.harvestSound() != null) {
+            world.playSound(at, type.harvestSound(), type.harvestSoundVolume(), type.harvestSoundPitch());
         }
     }
 
@@ -201,6 +276,7 @@ public final class GrowthEngine {
             return;
         }
         event.setCancelled(true);
+        harvestEffects(type, event.getLocation().getBlock());
         FarmHarvestEvent harvest = new FarmHarvestEvent(farm, drops);
         Bukkit.getPluginManager().callEvent(harvest);
         if (!harvest.getDrops().isEmpty()) {
