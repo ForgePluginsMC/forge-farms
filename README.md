@@ -26,7 +26,7 @@ An original implementation written from scratch for Paper 26.3. Folia-compatible
 ## Feature highlights
 
 - **Automated farms** — place a farm item to create a farm core; growth ticks sample random blocks in the radius, accelerate ageable crops, and harvest into the output pipeline
-- **One farm per crop** — wheat, carrot, potato, beetroot, nether wart, sweet berry, cocoa, pitcher, and torchflower farms, plus oak (trees), sugar cane (stalks), and melon (stem fruit); each tunable per crop in-game
+- **One farm per crop** — wheat, carrot, potato, beetroot, nether wart, sweet berry, cocoa, pitcher, and torchflower farms, plus a tree farm (all saplings: oak, birch, spruce, jungle, acacia, dark oak, mangrove, cherry), sugar cane (stalks), and melon (stem fruit); each tunable per crop in-game
 - **Tilling upgrade** — farms can auto-plow dirt/grass into farmland (level 1) and keep it fully hydrated with no water needed (level 2)
 - **Admin tuning GUI** — `/farmadmin tune` opens the full in-game farm-type editor: behavior knobs, particle/sound pickers, fuel items, harvestable crops, upgrade levels and costs, shop price, hologram lines, server settings — every value in `farm-types/*.yml` editable live, no restart, no commands
 - **Trust system (built in)** — roles (Owner/Admin/Member/Guest) with granular flags: block break/place, harvest, plant, interact, upgrade, fuel, configure, delete. Replaces paid ChestProtect-style dependencies

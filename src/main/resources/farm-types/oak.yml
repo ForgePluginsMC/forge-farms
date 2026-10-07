@@ -1,12 +1,12 @@
-# Oak Farm — tree farm. Saplings planted in the radius grow into trees
+# Tree Farm — tree farm. Saplings planted in the radius grow into trees
 # that are harvested the moment they mature, then replanted.
 id: oak
-display-name: "<green>Oak Tree Farm</green>"
+display-name: "<green>Tree Farm</green>"
 description: "Harvests fully grown trees in the radius and replants saplings."
 core-block: COMPOSTER
 item:
   material: OAK_SAPLING
-  name: "<green>Oak Tree Farm</green>"
+  name: "<green>Tree Farm</green>"
   lore:
     - "<gray>Place to create an automated tree farm.</gray>"
     - "<gray>Plant saplings inside the radius — trees are</gray>"
