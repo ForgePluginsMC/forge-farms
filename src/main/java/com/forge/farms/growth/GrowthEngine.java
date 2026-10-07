@@ -39,6 +39,7 @@ public final class GrowthEngine {
     private final Set<UUID> fuelEmptyNotified = new HashSet<>();
     private final Map<UUID, Long> lastHologramRefresh = new HashMap<>();
     private final Map<UUID, Integer> tickCount = new HashMap<>();
+    private final Map<UUID, Integer> effectTick = new HashMap<>();
 
     public GrowthEngine(ForgeFarms plugin) {
         this.plugin = plugin;
@@ -72,6 +73,7 @@ public final class GrowthEngine {
         fuelEmptyNotified.remove(farm.id());
 
         int radius = type.radiusAt(farm.radiusLevel());
+        workingEffects(type, world, core, farm, radius);
         int budget = type.maxHarvestsPerTick() <= 0 ? Integer.MAX_VALUE : type.maxHarvestsPerTick();
         List<ItemStack> harvested = new ArrayList<>();
         for (int i = 0; i < type.growthAttempts(); i++) {
@@ -228,6 +230,38 @@ public final class GrowthEngine {
                     block.getLocation().add(0.5, 0.6, 0.5), type.growthParticleCount());
         }
         return true;
+    }
+
+    /**
+     * "When and where it's working": an ambient aura at the core that only
+     * appears while the farm is fueled and ticking, plus a particle ring
+     * drawn at the working radius on an interval.
+     */
+    private void workingEffects(FarmType type, World world, Location core, Farm farm, int radius) {
+        if (type.workingParticle() != null) {
+            world.spawnParticle(type.workingParticle(), core.clone().add(0, 1.3, 0),
+                    type.workingParticleCount());
+        }
+        if (type.radiusParticle() != null) {
+            int n = effectTick.getOrDefault(farm.id(), 0) + 1;
+            if (n >= Math.max(1, type.radiusParticleInterval())) {
+                n = 0;
+                drawRadiusRing(type, world, core, radius);
+            }
+            effectTick.put(farm.id(), n);
+        }
+    }
+
+    private void drawRadiusRing(FarmType type, World world, Location core, int radius) {
+        int points = Math.max(8, type.radiusParticleCount());
+        double y = core.getY() + 0.6;
+        for (int i = 0; i < points; i++) {
+            double a = 2 * Math.PI * i / points;
+            world.spawnParticle(type.radiusParticle(),
+                    new Location(world, core.getX() + radius * Math.cos(a), y,
+                            core.getZ() + radius * Math.sin(a)),
+                    1);
+        }
     }
 
     private void harvestEffects(FarmType type, Block block) {

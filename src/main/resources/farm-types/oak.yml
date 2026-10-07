@@ -26,6 +26,8 @@ effects:
   harvest-sound: BLOCK_GRASS_BREAK
   harvest-sound-volume: 0.8
   harvest-sound-pitch: 0.9
+  working-particle: GLOW
+  working-particle-count: 6
 storage:
   base-slots: 27
 fuel:

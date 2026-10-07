@@ -53,6 +53,11 @@ public final class FarmType {
     private final float harvestSoundPitch;
     private final @Nullable Particle growthParticle;
     private final int growthParticleCount;
+    private final @Nullable Particle workingParticle;
+    private final int workingParticleCount;
+    private final @Nullable Particle radiusParticle;
+    private final int radiusParticleCount;
+    private final int radiusParticleInterval;
 
     private FarmType(Builder b) {
         this.id = b.id;
@@ -85,6 +90,11 @@ public final class FarmType {
         this.harvestSoundPitch = b.harvestSoundPitch;
         this.growthParticle = b.growthParticle;
         this.growthParticleCount = b.growthParticleCount;
+        this.workingParticle = b.workingParticle;
+        this.workingParticleCount = b.workingParticleCount;
+        this.radiusParticle = b.radiusParticle;
+        this.radiusParticleCount = b.radiusParticleCount;
+        this.radiusParticleInterval = b.radiusParticleInterval;
     }
 
     public String id() {
@@ -210,6 +220,29 @@ public final class FarmType {
         return growthParticleCount;
     }
 
+    /** Ambient particle shown at the core while the farm is fueled and ticking. */
+    public @Nullable Particle workingParticle() {
+        return workingParticle;
+    }
+
+    public int workingParticleCount() {
+        return workingParticleCount;
+    }
+
+    /** Particle drawn as a ring at the working radius. */
+    public @Nullable Particle radiusParticle() {
+        return radiusParticle;
+    }
+
+    public int radiusParticleCount() {
+        return radiusParticleCount;
+    }
+
+    /** Farm ticks between radius ring draws. */
+    public int radiusParticleInterval() {
+        return radiusParticleInterval;
+    }
+
     /** Radius in blocks at the given radius-track level (0 = base). */
     public int radiusAt(int radiusLevel) {
         UpgradeTrack track = upgrades.get(TrackType.RADIUS);
@@ -283,6 +316,11 @@ public final class FarmType {
         b.harvestSoundPitch = (float) c.getDouble("effects.harvest-sound-pitch", 1.1);
         b.growthParticle = parseParticle(c.getString("effects.growth-particle"), file);
         b.growthParticleCount = Math.max(1, c.getInt("effects.growth-particle-count", 4));
+        b.workingParticle = parseParticle(c.getString("effects.working-particle"), file);
+        b.workingParticleCount = Math.max(1, c.getInt("effects.working-particle-count", 6));
+        b.radiusParticle = parseParticle(c.getString("effects.radius-particle"), file);
+        b.radiusParticleCount = Math.max(8, c.getInt("effects.radius-particle-count", 48));
+        b.radiusParticleInterval = Math.max(1, c.getInt("effects.radius-particle-interval", 4));
         for (String s : c.getStringList("fuel.items")) {
             b.fuelItems.add(material(s, file, "fuel.items"));
         }
@@ -434,5 +472,10 @@ public final class FarmType {
         float harvestSoundPitch = 1.1f;
         @Nullable Particle growthParticle = null;
         int growthParticleCount = 4;
+        @Nullable Particle workingParticle = null;
+        int workingParticleCount = 6;
+        @Nullable Particle radiusParticle = null;
+        int radiusParticleCount = 48;
+        int radiusParticleInterval = 4;
     }
 }

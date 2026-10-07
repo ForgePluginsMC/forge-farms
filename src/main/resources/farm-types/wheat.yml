@@ -29,6 +29,13 @@ effects:
   harvest-sound-pitch: 1.0
   growth-particle: COMPOSTER
   growth-particle-count: 5
+  # Ambient aura at the core, only while the farm is fueled and ticking.
+  working-particle: GLOW
+  working-particle-count: 6
+  # Ring drawn at the working radius so you can see the farm's reach.
+  radius-particle: WAX_ON
+  radius-particle-count: 48
+  radius-particle-interval: 4
 storage:
   base-slots: 27
 fuel:
