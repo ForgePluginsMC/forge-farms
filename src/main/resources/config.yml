@@ -1,0 +1,47 @@
+# ForgeFarms configuration.
+# Farm types live in farm-types/*.yml — edit those to tune or add farm types.
+
+database:
+  # sqlite or mysql. JDBC drivers are bundled; nothing extra to download.
+  type: sqlite
+  mysql:
+    host: localhost
+    port: 3306
+    database: forgefarms
+    user: forgefarms
+    password: change-me
+    use-ssl: false
+
+limits:
+  max-farms-per-player: 3
+  max-members-per-farm: 10
+
+hologram:
+  # How often hologram text refreshes, in ticks (20 = 1 second).
+  refresh-ticks: 100
+
+# Auto-sell prices per item (requires Vault + an economy plugin).
+# Materials missing here cannot be auto-sold.
+prices:
+  WHEAT: 1.0
+  CARROT: 0.8
+  POTATO: 0.8
+  BEETROOT: 0.8
+  NETHER_WART: 1.5
+  SWEET_BERRIES: 0.5
+  COCOA_BEANS: 0.8
+  MELON_SLICE: 0.4
+  PUMPKIN: 2.0
+  SUGAR_CANE: 0.6
+  CACTUS: 0.6
+  BAMBOO: 0.3
+  KELP: 0.3
+  OAK_LOG: 1.2
+  BIRCH_LOG: 1.2
+  SPRUCE_LOG: 1.2
+  JUNGLE_LOG: 1.2
+  ACACIA_LOG: 1.2
+  DARK_OAK_LOG: 1.2
+  MANGROVE_LOG: 1.2
+  CHERRY_LOG: 1.5
+  OAK_SAPLING: 0.5

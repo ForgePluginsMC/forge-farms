@@ -1,0 +1,52 @@
+name: ForgeFarms
+version: 1.0.0
+main: com.forge.farms.ForgeFarms
+api-version: '26.3'
+author: Forge
+description: Automated player-owned farms — crops, trees, and custom farm types. Trust, hoppers, and holograms built in. No paid dependencies.
+website: https://github.com/ForgePluginsMC/forge-farms
+softdepend: [PlaceholderAPI, Lands, SuperiorSkyblock2, BentoBox, PlotSquared, GriefPrevention, WorldGuard]
+commands:
+  farm:
+    description: Manage your farms
+    usage: /farm <get|list|help>
+    aliases: [farms, forgefarms]
+  farmadmin:
+    description: ForgeFarms administration
+    usage: /farmadmin <give|reload|migrate|backup|restore|limits>
+    aliases: [fadm]
+permissions:
+  forgefarms.command.get:
+    description: Get farm items
+    default: true
+  forgefarms.command.list:
+    description: List own farms
+    default: true
+  forgefarms.command.help:
+    description: View farm help
+    default: true
+  forgefarms.upgrade:
+    description: Upgrade farms
+    default: true
+  forgefarms.teleport:
+    description: Teleport to own farms
+    default: op
+  forgefarms.bypass.*:
+    description: Bypass all farm protections
+    default: op
+    children:
+      forgefarms.bypass.protection: true
+      forgefarms.bypass.fuel: true
+      forgefarms.bypass.limits: true
+  forgefarms.bypass.protection:
+    description: Edit other players' farms
+    default: op
+  forgefarms.bypass.fuel:
+    description: Farms never run out of fuel
+    default: op
+  forgefarms.bypass.limits:
+    description: Ignore farm limits
+    default: op
+  forgefarms.admin:
+    description: Full ForgeFarms administration
+    default: op

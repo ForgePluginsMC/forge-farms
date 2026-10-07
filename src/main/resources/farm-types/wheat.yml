@@ -1,0 +1,70 @@
+# Wheat Farm — the classic starter crop farm.
+id: wheat
+display-name: "<green>Wheat Farm</green>"
+description: "Grows and harvests wheat, carrots, potatoes and beetroots automatically."
+core-block: COMPOSTER
+item:
+  material: WHEAT_SEEDS
+  name: "<green>Wheat Farm</green>"
+  lore:
+    - "<gray>Place to create an automated crop farm.</gray>"
+    - "<gray>Radius <white>{radius}</white> | Tick <white>{interval}s</white> | Storage <white>{slots}</white></gray>"
+    - "<yellow>Right-click the placed farm to manage it.</yellow>"
+farm:
+  base-radius: 4
+  tick-interval: 100
+  growth-attempts: 10
+storage:
+  base-slots: 27
+fuel:
+  items: [COAL, CHARCOAL]
+  ticks-per-item: 1200
+harvest:
+  wheat:
+    material: WHEAT
+    behavior: AGEABLE_CROP
+  carrots:
+    material: CARROTS
+    behavior: AGEABLE_CROP
+  potatoes:
+    material: POTATOES
+    behavior: AGEABLE_CROP
+  beetroots:
+    material: BEETROOTS
+    behavior: AGEABLE_CROP
+trees:
+  enabled: false
+offline:
+  max-hours: 12
+hologram:
+  enabled: true
+  lines:
+    - "<green><bold>Wheat Farm</bold></green>"
+    - "<gray>{owner}</gray>"
+    - "<yellow>Fuel {fuel_percent}%</yellow> <dark_gray>|</dark_gray> <aqua>{storage_used}/{storage_slots}</aqua>"
+upgrades:
+  radius:
+    levels:
+      - { effect: 6, cost-money: 500.0, description: "Radius 6" }
+      - { effect: 8, cost-money: 1500.0, description: "Radius 8" }
+      - { effect: 10, cost-money: 4000.0, description: "Radius 10" }
+      - { effect: 12, cost-money: 10000.0, description: "Radius 12" }
+      - { effect: 15, cost-money: 25000.0, description: "Radius 15" }
+  speed:
+    levels:
+      - { effect: 80, cost-money: 500.0, description: "Tick every 4s" }
+      - { effect: 60, cost-money: 1500.0, description: "Tick every 3s" }
+      - { effect: 40, cost-money: 4000.0, description: "Tick every 2s" }
+      - { effect: 25, cost-money: 10000.0, description: "Tick every 1.25s" }
+      - { effect: 15, cost-money: 25000.0, description: "Tick every 0.75s" }
+  storage:
+    levels:
+      - { effect: 36, cost-money: 300.0, description: "36 slots" }
+      - { effect: 45, cost-money: 900.0, description: "45 slots" }
+      - { effect: 54, cost-money: 2500.0, description: "54 slots" }
+  efficiency:
+    levels:
+      - { effect: 1.25, cost-money: 400.0, description: "+25% fuel life" }
+      - { effect: 1.5, cost-money: 1200.0, description: "+50% fuel life" }
+      - { effect: 2.0, cost-money: 3500.0, description: "+100% fuel life" }
+      - { effect: 3.0, cost-money: 9000.0, description: "+200% fuel life" }

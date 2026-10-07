@@ -1,0 +1,65 @@
+# Sugar Cane Farm — stalk farm. Harvests the stalk above the base block.
+id: sugarcane
+display-name: "<aqua>Sugar Cane Farm</aqua>"
+description: "Harvests sugar cane, cactus, bamboo and kelp stalks automatically."
+core-block: COMPOSTER
+item:
+  material: SUGAR_CANE
+  name: "<aqua>Sugar Cane Farm</aqua>"
+  lore:
+    - "<gray>Place to create an automated stalk farm.</gray>"
+    - "<gray>Plant stalks inside the radius — everything above</gray>"
+    - "<gray>the base block is harvested, the base regrows.</gray>"
+    - "<gray>Radius <white>{radius}</white> | Tick <white>{interval}s</white></gray>"
+    - "<yellow>Right-click the placed farm to manage it.</yellow>"
+farm:
+  base-radius: 4
+  tick-interval: 120
+  growth-attempts: 8
+storage:
+  base-slots: 27
+fuel:
+  items: [COAL, CHARCOAL]
+  ticks-per-item: 1200
+harvest:
+  sugar_cane:
+    material: SUGAR_CANE
+    behavior: STALK
+  cactus:
+    material: CACTUS
+    behavior: STALK
+  bamboo:
+    material: BAMBOO
+    behavior: STALK
+  kelp:
+    material: KELP_PLANT
+    behavior: STALK
+trees:
+  enabled: false
+offline:
+  max-hours: 12
+hologram:
+  enabled: true
+  lines:
+    - "<aqua><bold>Sugar Cane Farm</bold></aqua>"
+    - "<gray>{owner}</gray>"
+    - "<yellow>Fuel {fuel_percent}%</yellow> <dark_gray>|</dark_gray> <aqua>{storage_used}/{storage_slots}</aqua>"
+upgrades:
+  radius:
+    levels:
+      - { effect: 6, cost-money: 500.0, description: "Radius 6" }
+      - { effect: 8, cost-money: 1500.0, description: "Radius 8" }
+      - { effect: 11, cost-money: 5000.0, description: "Radius 11" }
+  speed:
+    levels:
+      - { effect: 90, cost-money: 500.0, description: "Tick every 4.5s" }
+      - { effect: 60, cost-money: 1800.0, description: "Tick every 3s" }
+      - { effect: 35, cost-money: 6000.0, description: "Tick every 1.75s" }
+  storage:
+    levels:
+      - { effect: 36, cost-money: 300.0, description: "36 slots" }
+      - { effect: 54, cost-money: 1200.0, description: "54 slots" }
+  efficiency:
+    levels:
+      - { effect: 1.25, cost-money: 400.0, description: "+25% fuel life" }
+      - { effect: 2.0, cost-money: 2500.0, description: "+100% fuel life" }

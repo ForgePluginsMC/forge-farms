@@ -1,0 +1,57 @@
+# Oak Farm — tree farm. Saplings planted in the radius grow into trees
+# that are harvested the moment they mature, then replanted.
+id: oak
+display-name: "<green>Oak Tree Farm</green>"
+description: "Harvests fully grown trees in the radius and replants saplings."
+core-block: COMPOSTER
+item:
+  material: OAK_SAPLING
+  name: "<green>Oak Tree Farm</green>"
+  lore:
+    - "<gray>Place to create an automated tree farm.</gray>"
+    - "<gray>Plant saplings inside the radius — trees are</gray>"
+    - "<gray>harvested on maturity and replanted automatically.</gray>"
+    - "<gray>Radius <white>{radius}</white> | Storage <white>{slots}</white></gray>"
+    - "<yellow>Right-click the placed farm to manage it.</yellow>"
+farm:
+  base-radius: 5
+  tick-interval: 200
+  growth-attempts: 4
+storage:
+  base-slots: 27
+fuel:
+  items: [COAL, CHARCOAL]
+  ticks-per-item: 1200
+harvest: {}
+trees:
+  enabled: true
+  allowed-saplings: [OAK_SAPLING, BIRCH_SAPLING, SPRUCE_SAPLING, JUNGLE_SAPLING, ACACIA_SAPLING, DARK_OAK_SAPLING, MANGROVE_PROPAGULE, CHERRY_SAPLING]
+offline:
+  max-hours: 12
+hologram:
+  enabled: true
+  lines:
+    - "<green><bold>Tree Farm</bold></green>"
+    - "<gray>{owner}</gray>"
+    - "<yellow>Fuel {fuel_percent}%</yellow> <dark_gray>|</dark_gray> <aqua>{storage_used}/{storage_slots}</aqua>"
+upgrades:
+  radius:
+    levels:
+      - { effect: 7, cost-money: 750.0, description: "Radius 7" }
+      - { effect: 9, cost-money: 2000.0, description: "Radius 9" }
+      - { effect: 12, cost-money: 6000.0, description: "Radius 12" }
+      - { effect: 15, cost-money: 15000.0, description: "Radius 15" }
+  speed:
+    levels:
+      - { effect: 150, cost-money: 750.0, description: "Tick every 7.5s" }
+      - { effect: 100, cost-money: 2000.0, description: "Tick every 5s" }
+      - { effect: 60, cost-money: 6000.0, description: "Tick every 3s" }
+  storage:
+    levels:
+      - { effect: 36, cost-money: 400.0, description: "36 slots" }
+      - { effect: 54, cost-money: 1500.0, description: "54 slots" }
+  efficiency:
+    levels:
+      - { effect: 1.25, cost-money: 500.0, description: "+25% fuel life" }
+      - { effect: 1.75, cost-money: 1800.0, description: "+75% fuel life" }
+      - { effect: 2.5, cost-money: 6000.0, description: "+150% fuel life" }
