@@ -64,7 +64,9 @@ upgrades:
       - { effect: 54, cost-money: 2500.0, description: "54 slots" }
   efficiency:
     levels:
-      - { effect: 1.25, cost-money: 400.0, description: "+25% fuel life" }
+      # Any combination of cost-money (Vault/ForgeCore economy), cost-item, and
+      # cost-xp-levels works — all specified costs are charged together.
+      - { effect: 1.25, cost-xp-levels: 10, description: "+25% fuel life" }
       - { effect: 1.5, cost-money: 1200.0, description: "+50% fuel life" }
       - { effect: 2.0, cost-money: 3500.0, description: "+100% fuel life" }
       - { effect: 3.0, cost-money: 9000.0, description: "+200% fuel life" }

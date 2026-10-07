@@ -69,6 +69,13 @@ public final class MenuManager implements Listener {
 
     @EventHandler
     public void onClose(InventoryCloseEvent event) {
-        open.remove(event.getPlayer().getUniqueId());
+        // Only unregister when the closed inventory is the tracked menu's.
+        // Switching menus (open() while one is open) fires a close for the
+        // OLD inventory — removing the player there would untrack the new menu
+        // and leave its clicks uncancelled (GUI items become pickable).
+        Menu menu = open.get(event.getPlayer().getUniqueId());
+        if (menu != null && event.getInventory() == menu.inventory()) {
+            open.remove(event.getPlayer().getUniqueId());
+        }
     }
 }

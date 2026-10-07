@@ -263,8 +263,9 @@ public final class FarmType {
                         }
                         costAmount = toInt(cm.get("amount"));
                     }
+                    int costXp = toInt(entry.get("cost-xp-levels"));
                     String desc = entry.get("description") == null ? "" : entry.get("description").toString();
-                    levels.add(new UpgradeLevel(n, effect, costMoney, costItem, costAmount, desc));
+                    levels.add(new UpgradeLevel(n, effect, costMoney, costItem, costAmount, costXp, desc));
                     n++;
                 }
                 b.upgrades.put(type, new UpgradeTrack(type, levels));

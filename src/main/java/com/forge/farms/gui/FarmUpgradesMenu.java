@@ -63,6 +63,9 @@ public final class FarmUpgradesMenu extends Menu {
                     + next.costItem().name().toLowerCase(java.util.Locale.ROOT).replace('_', ' ')
                     + "</white>");
         }
+        if (next.costXpLevels() > 0) {
+            parts.add("<white>" + next.costXpLevels() + " XP levels</white>");
+        }
         if (parts.isEmpty()) {
             return "<white>free</white>";
         }

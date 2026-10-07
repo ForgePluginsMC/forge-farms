@@ -128,7 +128,7 @@ public final class SQLiteDatabase extends Database {
                     + " radius_level, speed_level, storage_level, efficiency_level,"
                     + " fuel_ticks, storage, output_priority, auto_sell, hologram,"
                     + " total_harvested, created_at, last_tick)"
-                    + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+                    + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
                     + " ON CONFLICT(id) DO UPDATE SET owner=excluded.owner, type=excluded.type,"
                     + " world=excluded.world, x=excluded.x, y=excluded.y, z=excluded.z,"
                     + " radius_level=excluded.radius_level, speed_level=excluded.speed_level,"

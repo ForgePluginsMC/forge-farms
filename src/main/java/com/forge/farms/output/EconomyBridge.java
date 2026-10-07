@@ -19,9 +19,24 @@ public final class EconomyBridge {
     private @Nullable Method withdrawPlayer;
     private @Nullable Method getBalance;
     private boolean available;
+    private long lastRetryMs;
 
     public EconomyBridge(ForgeFarms plugin) {
         this.plugin = plugin;
+        tryInit();
+        plugin.getLogger().info(available ? "Vault economy hooked."
+                : "No Vault economy found yet; money features will enable if one registers later.");
+    }
+
+    /**
+     * (Re)attempt the hookup. Called lazily so a provider that enables after
+     * us (or registers late) is picked up on first use instead of staying
+     * dark for the whole session.
+     */
+    private void tryInit() {
+        if (available) {
+            return;
+        }
         try {
             Class<?> clazz = Class.forName("net.milkbowl.vault.economy.Economy");
             var registration = Bukkit.getServicesManager().getRegistration(clazz);
@@ -35,10 +50,21 @@ public final class EconomyBridge {
         } catch (ReflectiveOperationException | LinkageError e) {
             available = false;
         }
-        plugin.getLogger().info(available ? "Vault economy hooked." : "No Vault economy found; money features disabled.");
     }
 
     public boolean isAvailable() {
+        if (!available) {
+            // Retry at most every 30s — isAvailable() sits on hot paths
+            // (every harvest with SELL in the priority list).
+            long now = System.currentTimeMillis();
+            if (now - lastRetryMs >= 30_000L) {
+                lastRetryMs = now;
+                tryInit();
+                if (available) {
+                    plugin.getLogger().info("Vault economy hooked (late registration).");
+                }
+            }
+        }
         return available && economy != null;
     }
 

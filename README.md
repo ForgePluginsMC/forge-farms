@@ -129,7 +129,7 @@ upgrades:
       - { effect: 8, cost-money: 1500.0 }
 ```
 
-Costs accept `cost-money` (Vault), `cost-item: { material, amount }`, or both. Omit both for a free level.
+Costs accept `cost-money` (Vault economy — ForgeCore registers one natively, so no separate Vault install needed), `cost-item: { material, amount }`, `cost-xp-levels: N`, or any combination (all specified costs are charged together). Omit all three for a free level.
 
 ## API
 

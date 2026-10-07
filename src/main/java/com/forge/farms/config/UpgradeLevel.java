@@ -11,15 +11,17 @@ public final class UpgradeLevel {
     private final double costMoney;
     private final @Nullable Material costItem;
     private final int costItemAmount;
+    private final int costXpLevels;
     private final String description;
 
     public UpgradeLevel(int level, double effect, double costMoney,
-            @Nullable Material costItem, int costItemAmount, String description) {
+            @Nullable Material costItem, int costItemAmount, int costXpLevels, String description) {
         this.level = level;
         this.effect = effect;
         this.costMoney = costMoney;
         this.costItem = costItem;
         this.costItemAmount = costItemAmount;
+        this.costXpLevels = costXpLevels;
         this.description = description;
     }
 
@@ -43,11 +45,16 @@ public final class UpgradeLevel {
         return costItemAmount;
     }
 
+    /** XP levels charged for this upgrade (0 = none). */
+    public int costXpLevels() {
+        return costXpLevels;
+    }
+
     public String description() {
         return description;
     }
 
     public boolean hasCost() {
-        return costMoney > 0 || (costItem != null && costItemAmount > 0);
+        return costMoney > 0 || (costItem != null && costItemAmount > 0) || costXpLevels > 0;
     }
 }

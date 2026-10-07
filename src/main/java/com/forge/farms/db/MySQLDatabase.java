@@ -125,7 +125,7 @@ public final class MySQLDatabase extends Database {
                     + " radius_level, speed_level, storage_level, efficiency_level,"
                     + " fuel_ticks, storage, output_priority, auto_sell, hologram,"
                     + " total_harvested, created_at, last_tick)"
-                    + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+                    + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
                     + " ON DUPLICATE KEY UPDATE owner=VALUES(owner), type=VALUES(type),"
                     + " world=VALUES(world), x=VALUES(x), y=VALUES(y), z=VALUES(z),"
                     + " radius_level=VALUES(radius_level), speed_level=VALUES(speed_level),"

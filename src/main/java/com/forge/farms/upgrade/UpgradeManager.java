@@ -92,9 +92,18 @@ public final class UpgradeManager {
                 return false;
             }
         }
+        // XP leg.
+        if (level.costXpLevels() > 0 && player.getLevel() < level.costXpLevels()) {
+            player.sendMessage(Text.mm("<red>You need <white>" + level.costXpLevels()
+                    + " XP levels</white> for this upgrade.</red>"));
+            return false;
+        }
         if (level.costMoney() > 0 && !plugin.output().economy().withdraw(player, level.costMoney())) {
             player.sendMessage(Text.mm("<red>Payment failed — upgrade cancelled.</red>"));
             return false;
+        }
+        if (level.costXpLevels() > 0) {
+            player.setLevel(player.getLevel() - level.costXpLevels());
         }
         apply(player, farm, type, track, level);
         return true;

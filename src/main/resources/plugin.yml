@@ -5,7 +5,7 @@ api-version: '26.3'
 author: Forge
 description: Automated player-owned farms — crops, trees, and custom farm types. Trust, hoppers, and holograms built in. No paid dependencies.
 website: https://github.com/ForgePluginsMC/forge-farms
-softdepend: [PlaceholderAPI, Lands, SuperiorSkyblock2, BentoBox, PlotSquared, GriefPrevention, WorldGuard]
+softdepend: [ForgeCore, PlaceholderAPI, Lands, SuperiorSkyblock2, BentoBox, PlotSquared, GriefPrevention, WorldGuard]
 commands:
   farm:
     description: Manage your farms
