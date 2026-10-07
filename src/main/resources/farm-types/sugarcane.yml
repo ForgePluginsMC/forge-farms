@@ -12,6 +12,12 @@ item:
     - "<gray>the base block is harvested, the base regrows.</gray>"
     - "<gray>Radius <white>{radius}</white> | Tick <white>{interval}s</white></gray>"
     - "<yellow>Right-click the placed farm to manage it.</yellow>"
+
+# Shop entry for /farm shop.
+shop:
+  enabled: true
+  price-money: 3000.0
+  price-xp-levels: 12
 farm:
   base-radius: 4
   tick-interval: 120

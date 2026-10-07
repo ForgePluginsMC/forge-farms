@@ -13,6 +13,12 @@ item:
     - "<gray>harvested on maturity and replanted automatically.</gray>"
     - "<gray>Radius <white>{radius}</white> | Storage <white>{slots}</white></gray>"
     - "<yellow>Right-click the placed farm to manage it.</yellow>"
+
+# Shop entry for /farm shop.
+shop:
+  enabled: true
+  price-money: 3500.0
+  price-xp-levels: 15
 farm:
   base-radius: 5
   tick-interval: 200

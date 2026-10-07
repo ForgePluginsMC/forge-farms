@@ -15,6 +15,7 @@ import com.forge.farms.hologram.HologramManager;
 import com.forge.farms.listener.FarmListener;
 import com.forge.farms.members.TrustManager;
 import com.forge.farms.output.OutputPipeline;
+import com.forge.farms.shop.ShopManager;
 import com.forge.farms.upgrade.UpgradeManager;
 import java.util.logging.Level;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -37,6 +38,7 @@ public final class ForgeFarms extends JavaPlugin {
     private HologramManager hologramManager;
     private OutputPipeline outputPipeline;
     private MenuManager menuManager;
+    private ShopManager shopManager;
 
     /** Plugin instance for static access (keys, API). */
     public static ForgeFarms getInstance() {
@@ -63,6 +65,7 @@ public final class ForgeFarms extends JavaPlugin {
             hologramManager = new HologramManager(this);
             outputPipeline = new OutputPipeline(this);
             menuManager = new MenuManager(this);
+            shopManager = new ShopManager(this);
 
             // Load persisted farms, then start their ticks and holograms.
             scheduler.async(() -> {
@@ -168,5 +171,9 @@ public final class ForgeFarms extends JavaPlugin {
 
     public MenuManager menus() {
         return menuManager;
+    }
+
+    public ShopManager shop() {
+        return shopManager;
     }
 }

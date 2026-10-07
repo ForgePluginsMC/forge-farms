@@ -19,6 +19,9 @@ permissions:
   forgefarms.command.get:
     description: Get farm items
     default: true
+  forgefarms.command.shop:
+    description: Buy farms from the shop
+    default: true
   forgefarms.command.list:
     description: List own farms
     default: true

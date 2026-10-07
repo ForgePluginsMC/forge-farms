@@ -8,10 +8,9 @@ import com.forge.farms.config.UpgradeLevel;
 import com.forge.farms.config.UpgradeTrack;
 import com.forge.farms.core.Text;
 import com.forge.farms.farm.Farm;
+import java.util.List;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -59,7 +58,7 @@ public final class UpgradeManager {
             player.sendMessage(Text.mm("<yellow>" + trackTitle(track) + " is already maxed.</yellow>"));
             return false;
         }
-        if (!level.hasCost()) {
+        if (level.cost().isFree()) {
             apply(player, farm, type, track, level);
             return true;
         }
@@ -69,41 +68,15 @@ public final class UpgradeManager {
         if (event.isCancelled()) {
             return false;
         }
-        // Money leg.
-        if (level.costMoney() > 0) {
-            if (!plugin.output().economy().isAvailable()) {
-                plugin.output().tellNoEconomy(player);
-                return false;
-            }
-            double balance = plugin.output().economy().balance(player);
-            if (balance < level.costMoney()) {
-                player.sendMessage(Text.mm("<red>You need <white>"
-                        + plugin.output().formatMoney(level.costMoney())
-                        + "</white> for this upgrade.</red>"));
-                return false;
-            }
-        }
-        // Item leg.
-        Material costItem = level.costItem();
-        if (costItem != null && level.costItemAmount() > 0) {
-            if (!takeItems(player, costItem, level.costItemAmount())) {
-                player.sendMessage(Text.mm("<red>You need <white>" + level.costItemAmount()
-                        + "x " + pretty(costItem) + "</white> for this upgrade.</red>"));
-                return false;
-            }
-        }
-        // XP leg.
-        if (level.costXpLevels() > 0 && player.getLevel() < level.costXpLevels()) {
-            player.sendMessage(Text.mm("<red>You need <white>" + level.costXpLevels()
-                    + " XP levels</white> for this upgrade.</red>"));
+        List<String> unmet = level.cost().unmet(player, plugin.output().economy());
+        if (!unmet.isEmpty()) {
+            player.sendMessage(Text.mm("<red>You need " + String.join(", ", unmet)
+                    + " for this upgrade.</red>"));
             return false;
         }
-        if (level.costMoney() > 0 && !plugin.output().economy().withdraw(player, level.costMoney())) {
+        if (!level.cost().charge(player, plugin.output().economy())) {
             player.sendMessage(Text.mm("<red>Payment failed — upgrade cancelled.</red>"));
             return false;
-        }
-        if (level.costXpLevels() > 0) {
-            player.setLevel(player.getLevel() - level.costXpLevels());
         }
         apply(player, farm, type, track, level);
         return true;
@@ -123,20 +96,6 @@ public final class UpgradeManager {
                 : level.description();
         player.sendMessage(Text.mm("<green>Upgraded " + trackTitle(track) + " to <white>"
                 + effectDesc + "</white>!</green>"));
-    }
-
-    private boolean takeItems(Player player, Material material, int amount) {
-        int found = 0;
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == material) {
-                found += item.getAmount();
-            }
-        }
-        if (found < amount) {
-            return false;
-        }
-        player.getInventory().removeItem(new ItemStack(material, amount));
-        return true;
     }
 
     public String trackTitle(TrackType track) {
@@ -168,17 +127,5 @@ public final class UpgradeManager {
             case STORAGE -> (int) lvl.effect() + " slots";
             case EFFICIENCY -> "x" + lvl.effect() + " fuel";
         };
-    }
-
-    private String pretty(Material material) {
-        String[] parts = material.name().toLowerCase(java.util.Locale.ROOT).split("_");
-        StringBuilder sb = new StringBuilder();
-        for (String p : parts) {
-            if (!sb.isEmpty()) {
-                sb.append(' ');
-            }
-            sb.append(Character.toUpperCase(p.charAt(0))).append(p.substring(1));
-        }
-        return sb.toString();
     }
 }

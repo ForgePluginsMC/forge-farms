@@ -73,14 +73,14 @@ public final class GrowthEngine {
         fuelEmptyNotified.remove(farm.id());
 
         int radius = type.radiusAt(farm.radiusLevel());
-        workingEffects(type, world, core, farm, radius);
-        int budget = type.maxHarvestsPerTick() <= 0 ? Integer.MAX_VALUE : type.maxHarvestsPerTick();
+        workingEffects(farm, type, world, core, radius);
+        int budget = effMaxHarvests(farm, type);
         List<ItemStack> harvested = new ArrayList<>();
-        for (int i = 0; i < type.growthAttempts(); i++) {
+        for (int i = 0; i < effAttempts(farm, type); i++) {
             budget = sample(farm, type, world, core, radius, harvested, budget);
         }
-        if (type.harvestSweep() && budget > 0) {
-            budget = sweep(type, world, core, radius, harvested, budget);
+        if (effSweep(farm, type) && budget > 0) {
+            budget = sweep(farm, type, world, core, radius, harvested, budget);
         }
         if (!harvested.isEmpty()) {
             FarmHarvestEvent event = new FarmHarvestEvent(farm, harvested);
@@ -131,10 +131,10 @@ public final class GrowthEngine {
         Block block = world.getBlockAt(core.getBlockX() + dx, core.getBlockY() + dy, core.getBlockZ() + dz);
         for (Harvestable h : type.harvestables()) {
             if (block.getType() == h.material()) {
-                if (budget > 0 && tryHarvest(type, h, block, harvested)) {
+                if (budget > 0 && tryHarvest(farm, type, h, block, harvested)) {
                     budget--;
                 } else {
-                    tryGrow(type, h, block);
+                    tryGrow(farm, type, h, block);
                 }
                 return budget;
             }
@@ -147,7 +147,7 @@ public final class GrowthEngine {
      * maxed farm look dramatic: whole waves of crops pop at once.
      * Returns the remaining harvest budget.
      */
-    private int sweep(FarmType type, World world, Location core, int radius,
+    private int sweep(Farm farm, FarmType type, World world, Location core, int radius,
             List<ItemStack> harvested, int budget) {
         int cx = core.getBlockX();
         int cy = core.getBlockY();
@@ -160,7 +160,7 @@ public final class GrowthEngine {
                 for (int dy = -2; dy <= 3 && budget > 0; dy++) {
                     Block block = world.getBlockAt(cx + dx, cy + dy, cz + dz);
                     for (Harvestable h : type.harvestables()) {
-                        if (block.getType() == h.material() && tryHarvest(type, h, block, harvested)) {
+                        if (block.getType() == h.material() && tryHarvest(farm, type, h, block, harvested)) {
                             budget--;
                             break;
                         }
@@ -172,7 +172,8 @@ public final class GrowthEngine {
     }
 
     /** Harvest the block if it is ready. Returns true when something was harvested. */
-    private boolean tryHarvest(FarmType type, Harvestable h, Block block, List<ItemStack> harvested) {
+    private boolean tryHarvest(Farm farm, FarmType type, Harvestable h, Block block,
+            List<ItemStack> harvested) {
         boolean got;
         switch (h.behavior()) {
             case AGEABLE_CROP -> {
@@ -209,13 +210,13 @@ public final class GrowthEngine {
             }
         }
         if (got) {
-            harvestEffects(type, block);
+            harvestEffects(farm, type, block);
         }
         return got;
     }
 
     /** Accelerate a growing crop. Returns true when it aged up. */
-    private boolean tryGrow(FarmType type, Harvestable h, Block block) {
+    private boolean tryGrow(Farm farm, FarmType type, Harvestable h, Block block) {
         if (h.behavior() != HarvestBehavior.AGEABLE_CROP) {
             return false;
         }
@@ -223,9 +224,9 @@ public final class GrowthEngine {
         if (!(data instanceof Ageable ageable) || ageable.getAge() >= ageable.getMaximumAge()) {
             return false;
         }
-        ageable.setAge(Math.min(ageable.getMaximumAge(), ageable.getAge() + type.agePerSample()));
+        ageable.setAge(Math.min(ageable.getMaximumAge(), ageable.getAge() + effBoost(farm, type)));
         block.setBlockData(ageable);
-        if (type.growthParticle() != null) {
+        if (fxGrowth(farm, type)) {
             block.getWorld().spawnParticle(type.growthParticle(),
                     block.getLocation().add(0.5, 0.6, 0.5), type.growthParticleCount());
         }
@@ -237,12 +238,12 @@ public final class GrowthEngine {
      * appears while the farm is fueled and ticking, plus a particle ring
      * drawn at the working radius on an interval.
      */
-    private void workingEffects(FarmType type, World world, Location core, Farm farm, int radius) {
-        if (type.workingParticle() != null) {
+    private void workingEffects(Farm farm, FarmType type, World world, Location core, int radius) {
+        if (fxAura(farm, type)) {
             world.spawnParticle(type.workingParticle(), core.clone().add(0, 1.3, 0),
                     type.workingParticleCount());
         }
-        if (type.radiusParticle() != null) {
+        if (fxRing(farm, type)) {
             int n = effectTick.getOrDefault(farm.id(), 0) + 1;
             if (n >= Math.max(1, type.radiusParticleInterval())) {
                 n = 0;
@@ -264,15 +265,57 @@ public final class GrowthEngine {
         }
     }
 
-    private void harvestEffects(FarmType type, Block block) {
+    private void harvestEffects(Farm farm, FarmType type, Block block) {
         World world = block.getWorld();
         Location at = block.getLocation().add(0.5, 0.5, 0.5);
-        if (type.harvestParticle() != null) {
+        if (fxHarvestParticles(farm, type)) {
             world.spawnParticle(type.harvestParticle(), at, type.harvestParticleCount());
         }
-        if (type.harvestSound() != null) {
+        if (fxHarvestSound(farm, type)) {
             world.playSound(at, type.harvestSound(), type.harvestSoundVolume(), type.harvestSoundPitch());
         }
+    }
+
+    /**
+     * Effective tuning values: per-farm GUI overrides, falling back to the
+     * type defaults from config.
+     */
+    private int effAttempts(Farm farm, FarmType type) {
+        return Math.max(1, farm.intSetting(Farm.SETTING_GROWTH_ATTEMPTS, type.growthAttempts()));
+    }
+
+    private int effBoost(Farm farm, FarmType type) {
+        return Math.max(1, farm.intSetting(Farm.SETTING_AGE_PER_SAMPLE, type.agePerSample()));
+    }
+
+    private boolean effSweep(Farm farm, FarmType type) {
+        return farm.boolSetting(Farm.SETTING_HARVEST_SWEEP, type.harvestSweep());
+    }
+
+    private int effMaxHarvests(Farm farm, FarmType type) {
+        int cap = farm.intSetting(Farm.SETTING_MAX_HARVESTS_PER_TICK, type.maxHarvestsPerTick());
+        return cap <= 0 ? Integer.MAX_VALUE : cap;
+    }
+
+    private boolean fxHarvestParticles(Farm farm, FarmType type) {
+        return type.harvestParticle() != null
+                && farm.boolSetting(Farm.SETTING_FX_HARVEST_PARTICLES, true);
+    }
+
+    private boolean fxHarvestSound(Farm farm, FarmType type) {
+        return type.harvestSound() != null && farm.boolSetting(Farm.SETTING_FX_HARVEST_SOUND, true);
+    }
+
+    private boolean fxGrowth(Farm farm, FarmType type) {
+        return type.growthParticle() != null;
+    }
+
+    private boolean fxAura(Farm farm, FarmType type) {
+        return type.workingParticle() != null && farm.boolSetting(Farm.SETTING_FX_WORKING_AURA, true);
+    }
+
+    private boolean fxRing(Farm farm, FarmType type) {
+        return type.radiusParticle() != null && farm.boolSetting(Farm.SETTING_FX_RADIUS_RING, true);
     }
 
     /**
@@ -310,7 +353,7 @@ public final class GrowthEngine {
             return;
         }
         event.setCancelled(true);
-        harvestEffects(type, event.getLocation().getBlock());
+        harvestEffects(farm, type, event.getLocation().getBlock());
         FarmHarvestEvent harvest = new FarmHarvestEvent(farm, drops);
         Bukkit.getPluginManager().callEvent(harvest);
         if (!harvest.getDrops().isEmpty()) {
@@ -367,6 +410,8 @@ public final class GrowthEngine {
                 case NETHER_WART -> List.of(new ItemStack(Material.NETHER_WART, 3));
                 case SWEET_BERRY_BUSH -> List.of(new ItemStack(Material.SWEET_BERRIES, 3));
                 case COCOA -> List.of(new ItemStack(Material.COCOA_BEANS, 3));
+                case PITCHER_CROP -> List.of(new ItemStack(Material.PITCHER_PLANT));
+                case TORCHFLOWER_CROP -> List.of(new ItemStack(Material.TORCHFLOWER));
                 default -> List.of(new ItemStack(crop));
             };
             case STEM_FRUIT -> switch (crop) {

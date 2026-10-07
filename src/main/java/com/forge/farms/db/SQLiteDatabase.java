@@ -3,7 +3,6 @@ package com.forge.farms.db;
 import com.forge.farms.ForgeFarms;
 import com.forge.farms.config.ConfigManager;
 import com.forge.farms.farm.Farm;
-import com.forge.farms.output.OutputMode;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 /** Default backend. Single file, zero setup, driver bundled in the jar. */
 public final class SQLiteDatabase extends Database {
@@ -62,6 +60,16 @@ public final class SQLiteDatabase extends Database {
                     s.execute(DDL_FARMS);
                     s.execute(DDL_MEMBERS);
                 }
+                // v2: per-farm tuning knobs
+                try (Statement s = connection().createStatement()) {
+                    s.execute("ALTER TABLE forgefarms_farms ADD COLUMN settings MEDIUMTEXT");
+                } catch (SQLException e) {
+                    if (e.getMessage() == null
+                            || !e.getMessage().toLowerCase(java.util.Locale.ROOT).contains("duplicate")) {
+                        throw e;
+                    }
+                    // Column already exists — nothing to do.
+                }
             } catch (SQLException e) {
                 throw new IllegalStateException("Failed to migrate SQLite schema", e);
             }
@@ -75,7 +83,7 @@ public final class SQLiteDatabase extends Database {
             try (Statement s = connection().createStatement();
                     ResultSet rs = s.executeQuery("SELECT * FROM forgefarms_farms")) {
                 while (rs.next()) {
-                    out.add(readFarm(rs));
+                    out.add(Database.readFarm(rs));
                 }
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, "Failed to load farms", e);
@@ -84,79 +92,20 @@ public final class SQLiteDatabase extends Database {
         return out;
     }
 
-    private Farm readFarm(ResultSet rs) throws SQLException {
-        List<OutputMode> priority = parsePriority(rs.getString("output_priority"));
-        Farm farm = new Farm(
-                UUID.fromString(rs.getString("id")),
-                UUID.fromString(rs.getString("owner")),
-                rs.getString("type"),
-                UUID.fromString(rs.getString("world")),
-                rs.getInt("x"), rs.getInt("y"), rs.getInt("z"),
-                rs.getInt("radius_level"), rs.getInt("speed_level"),
-                rs.getInt("storage_level"), rs.getInt("efficiency_level"),
-                rs.getLong("fuel_ticks"),
-                priority,
-                rs.getInt("auto_sell") != 0,
-                rs.getInt("hologram") != 0,
-                rs.getLong("total_harvested"),
-                rs.getLong("created_at"), rs.getLong("last_tick"));
-        farm.setRawStorage(Database.decodeStorage(rs.getString("storage"), 54));
-        return farm;
-    }
-
-    private List<OutputMode> parsePriority(String raw) {
-        List<OutputMode> out = new ArrayList<>();
-        if (raw != null) {
-            for (String part : raw.split(",")) {
-                try {
-                    out.add(OutputMode.valueOf(part.trim().toUpperCase(java.util.Locale.ROOT)));
-                } catch (IllegalArgumentException ignored) {
-                    // skip unknown entries
-                }
-            }
-        }
-        if (out.isEmpty()) {
-            out.add(OutputMode.STORAGE);
-        }
-        return out;
-    }
-
     @Override
     public void saveFarm(Farm farm) {
         synchronized (lock) {
-            String sql = "INSERT INTO forgefarms_farms (id, owner, type, world, x, y, z,"
-                    + " radius_level, speed_level, storage_level, efficiency_level,"
-                    + " fuel_ticks, storage, output_priority, auto_sell, hologram,"
-                    + " total_harvested, created_at, last_tick)"
-                    + " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
-                    + " ON CONFLICT(id) DO UPDATE SET owner=excluded.owner, type=excluded.type,"
-                    + " world=excluded.world, x=excluded.x, y=excluded.y, z=excluded.z,"
-                    + " radius_level=excluded.radius_level, speed_level=excluded.speed_level,"
-                    + " storage_level=excluded.storage_level, efficiency_level=excluded.efficiency_level,"
-                    + " fuel_ticks=excluded.fuel_ticks, storage=excluded.storage,"
-                    + " output_priority=excluded.output_priority, auto_sell=excluded.auto_sell,"
-                    + " hologram=excluded.hologram, total_harvested=excluded.total_harvested,"
-                    + " created_at=excluded.created_at, last_tick=excluded.last_tick";
-            try (PreparedStatement ps = connection().prepareStatement(sql)) {
-                ps.setString(1, farm.id().toString());
-                ps.setString(2, farm.owner().toString());
-                ps.setString(3, farm.typeId());
-                ps.setString(4, farm.worldId().toString());
-                ps.setInt(5, farm.x());
-                ps.setInt(6, farm.y());
-                ps.setInt(7, farm.z());
-                ps.setInt(8, farm.radiusLevel());
-                ps.setInt(9, farm.speedLevel());
-                ps.setInt(10, farm.storageLevel());
-                ps.setInt(11, farm.efficiencyLevel());
-                ps.setLong(12, farm.fuelTicks());
-                ps.setString(13, Database.encodeStorage(farm.storageSnapshot()));
-                ps.setString(14, farm.outputPriority().stream().map(Enum::name).collect(Collectors.joining(",")));
-                ps.setInt(15, farm.autoSell() ? 1 : 0);
-                ps.setInt(16, farm.hologramEnabled() ? 1 : 0);
-                ps.setLong(17, farm.totalHarvested());
-                ps.setLong(18, farm.createdAt());
-                ps.setLong(19, farm.lastTickAt());
+            StringBuilder sql = new StringBuilder("INSERT INTO forgefarms_farms (")
+                    .append(farmColumnList()).append(") VALUES (").append(farmPlaceholders()).append(")")
+                    .append(" ON CONFLICT(id) DO UPDATE SET ");
+            for (int i = 1; i < FARM_COLS.length; i++) {
+                if (i > 1) {
+                    sql.append(',');
+                }
+                sql.append(FARM_COLS[i]).append("=excluded.").append(FARM_COLS[i]);
+            }
+            try (PreparedStatement ps = connection().prepareStatement(sql.toString())) {
+                bindFarm(ps, farm);
                 ps.executeUpdate();
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, "Failed to save farm " + farm.id(), e);

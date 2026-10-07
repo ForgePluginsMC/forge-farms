@@ -1,15 +1,22 @@
-# Wheat Farm — the classic starter crop farm.
+# Crop Farm — the classic starter crop farm. Handles every ageable crop.
 id: wheat
-display-name: "<green>Wheat Farm</green>"
-description: "Grows and harvests wheat, carrots, potatoes and beetroots automatically."
+display-name: "<green>Crop Farm</green>"
+description: "Grows and harvests every crop automatically: wheat, carrots, potatoes, beetroots, nether wart, sweet berries, cocoa, pitcher plants and torchflowers."
 core-block: COMPOSTER
 item:
   material: WHEAT_SEEDS
-  name: "<green>Wheat Farm</green>"
+  name: "<green>Crop Farm</green>"
   lore:
     - "<gray>Place to create an automated crop farm.</gray>"
     - "<gray>Radius <white>{radius}</white> | Tick <white>{interval}s</white> | Storage <white>{slots}</white></gray>"
     - "<yellow>Right-click the placed farm to manage it.</yellow>"
+# Shop entry for /farm shop. Any combination of price-money (Vault/ForgeCore
+# economy), price-item {material, amount}, and price-xp-levels — all are
+# charged together. enabled: false hides the type from the shop.
+shop:
+  enabled: true
+  price-money: 2500.0
+  price-xp-levels: 10
 farm:
   base-radius: 4
   tick-interval: 100
@@ -54,6 +61,21 @@ harvest:
   beetroots:
     material: BEETROOTS
     behavior: AGEABLE_CROP
+  nether_wart:
+    material: NETHER_WART
+    behavior: AGEABLE_CROP
+  sweet_berries:
+    material: SWEET_BERRY_BUSH
+    behavior: AGEABLE_CROP
+  cocoa:
+    material: COCOA
+    behavior: AGEABLE_CROP
+  pitcher:
+    material: PITCHER_CROP
+    behavior: AGEABLE_CROP
+  torchflower:
+    material: TORCHFLOWER_CROP
+    behavior: AGEABLE_CROP
 trees:
   enabled: false
 offline:
@@ -61,7 +83,7 @@ offline:
 hologram:
   enabled: true
   lines:
-    - "<green><bold>Wheat Farm</bold></green>"
+    - "<green><bold>Crop Farm</bold></green>"
     - "<gray>{owner}</gray>"
     - "<yellow>Fuel {fuel_percent}%</yellow> <dark_gray>|</dark_gray> <aqua>{storage_used}/{storage_slots}</aqua>"
 upgrades:

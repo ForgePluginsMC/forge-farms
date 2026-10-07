@@ -43,6 +43,7 @@ public final class FarmCommand implements CommandExecutor, TabCompleter {
         String sub = args[0].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "get" -> get(sender, args);
+            case "shop" -> shop(sender);
             case "list" -> list(sender);
             case "menu" -> menu(sender, args);
             case "trust" -> trust(sender, args);
@@ -90,6 +91,18 @@ public final class FarmCommand implements CommandExecutor, TabCompleter {
         player.getInventory().addItem(item);
         player.sendMessage(Text.mm("<green>Gave you <white>" + amount + "x " + type.displayName()
                 + "</white><green>.</green>"));
+    }
+
+    private void shop(CommandSender sender) {
+        if (!sender.hasPermission("forgefarms.command.shop")) {
+            sender.sendMessage(Text.mm("<red>No permission.</red>"));
+            return;
+        }
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Text.mm("<red>Players only.</red>"));
+            return;
+        }
+        plugin.menus().open(player, new com.forge.farms.gui.FarmShopMenu(plugin));
     }
 
     private void list(CommandSender sender) {
@@ -250,6 +263,7 @@ public final class FarmCommand implements CommandExecutor, TabCompleter {
     private void help(CommandSender sender) {
         sender.sendMessage(Text.mm("<dark_green><bold>ForgeFarms</bold></dark_green> <gray>— automated farms</gray>"));
         sender.sendMessage(Text.mm("<white>/farm get <type> [amount]</white> <gray>— get a farm item</gray>"));
+        sender.sendMessage(Text.mm("<white>/farm shop</white> <gray>— buy farms for money, items, or XP</gray>"));
         sender.sendMessage(Text.mm("<white>/farm list</white> <gray>— your farms</gray>"));
         sender.sendMessage(Text.mm("<white>/farm menu [id]</white> <gray>— manage a farm</gray>"));
         sender.sendMessage(Text.mm("<white>/farm trust <player> [role]</white> <gray>— add a member</gray>"));
@@ -295,7 +309,7 @@ public final class FarmCommand implements CommandExecutor, TabCompleter {
             @NotNull String alias, String[] args) {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
-            for (String s : List.of("get", "list", "menu", "trust", "untrust", "tp", "help")) {
+            for (String s : List.of("get", "shop", "list", "menu", "trust", "untrust", "tp", "help")) {
                 if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) {
                     out.add(s);
                 }

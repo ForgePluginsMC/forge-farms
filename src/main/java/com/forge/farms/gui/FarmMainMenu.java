@@ -70,6 +70,10 @@ public final class FarmMainMenu extends Menu {
                 "<gold>Auto-sell</gold>",
                 "<gray>Currently: <white>" + (farm.autoSell() ? "ON" : "OFF") + "</white></gray>",
                 "<yellow>Click to toggle.</yellow>"));
+        inventory.setItem(17, button(Material.COMPARATOR, "<gold>Tuning</gold>",
+                "<gray>Growth, harvest, and effect knobs</gray>",
+                "<gray>for this farm. Overrides the type defaults.</gray>",
+                "<yellow>Click to open.</yellow>"));
     }
 
     @Override
@@ -111,6 +115,13 @@ public final class FarmMainMenu extends Menu {
                 farm.setAutoSell(!farm.autoSell());
                 plugin.farms().saveFarm(farm);
                 plugin.menus().refresh(viewer);
+            }
+            case 17 -> {
+                if (plugin.trust().can(viewer, farm, com.forge.farms.members.FarmFlag.CONFIGURE)) {
+                    plugin.menus().open(viewer, new FarmTuneMenu(plugin, farm));
+                } else {
+                    viewer.sendMessage(Text.mm("<red>You can't tune this farm.</red>"));
+                }
             }
             default -> {
             }

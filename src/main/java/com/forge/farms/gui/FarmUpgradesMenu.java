@@ -54,22 +54,7 @@ public final class FarmUpgradesMenu extends Menu {
     }
 
     private String costLine(UpgradeLevel next) {
-        List<String> parts = new ArrayList<>();
-        if (next.costMoney() > 0) {
-            parts.add("<white>" + plugin.output().formatMoney(next.costMoney()) + "</white>");
-        }
-        if (next.costItem() != null && next.costItemAmount() > 0) {
-            parts.add("<white>" + next.costItemAmount() + "x "
-                    + next.costItem().name().toLowerCase(java.util.Locale.ROOT).replace('_', ' ')
-                    + "</white>");
-        }
-        if (next.costXpLevels() > 0) {
-            parts.add("<white>" + next.costXpLevels() + " XP levels</white>");
-        }
-        if (parts.isEmpty()) {
-            return "<white>free</white>";
-        }
-        return String.join(" <gray>+</gray> ", parts);
+        return next.cost().describe(plugin.output()::formatMoney);
     }
 
     @Override

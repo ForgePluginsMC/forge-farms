@@ -58,6 +58,8 @@ public final class FarmType {
     private final @Nullable Particle radiusParticle;
     private final int radiusParticleCount;
     private final int radiusParticleInterval;
+    private final boolean shopEnabled;
+    private final Cost shopCost;
 
     private FarmType(Builder b) {
         this.id = b.id;
@@ -95,6 +97,8 @@ public final class FarmType {
         this.radiusParticle = b.radiusParticle;
         this.radiusParticleCount = b.radiusParticleCount;
         this.radiusParticleInterval = b.radiusParticleInterval;
+        this.shopEnabled = b.shopEnabled;
+        this.shopCost = b.shopCost;
     }
 
     public String id() {
@@ -243,6 +247,16 @@ public final class FarmType {
         return radiusParticleInterval;
     }
 
+    /** Whether this farm type appears in the /farm shop GUI. */
+    public boolean shopEnabled() {
+        return shopEnabled;
+    }
+
+    /** Purchase price in the shop (Cost.free() = no charge). */
+    public Cost shopCost() {
+        return shopCost;
+    }
+
     /** Radius in blocks at the given radius-track level (0 = base). */
     public int radiusAt(int radiusLevel) {
         UpgradeTrack track = upgrades.get(TrackType.RADIUS);
@@ -321,6 +335,14 @@ public final class FarmType {
         b.radiusParticle = parseParticle(c.getString("effects.radius-particle"), file);
         b.radiusParticleCount = Math.max(8, c.getInt("effects.radius-particle-count", 48));
         b.radiusParticleInterval = Math.max(1, c.getInt("effects.radius-particle-interval", 4));
+        ConfigurationSection shop = c.getConfigurationSection("shop");
+        if (shop != null) {
+            b.shopEnabled = shop.getBoolean("enabled", true);
+            b.shopCost = Cost.parse(shop.getValues(false), "price-", file, "shop");
+        } else {
+            b.shopEnabled = true;
+            b.shopCost = Cost.free();
+        }
         for (String s : c.getStringList("fuel.items")) {
             b.fuelItems.add(material(s, file, "fuel.items"));
         }
@@ -366,20 +388,9 @@ public final class FarmType {
                 int n = 1;
                 for (Map<?, ?> entry : raw) {
                     double effect = toDouble(entry.get("effect"));
-                    double costMoney = toDouble(entry.get("cost-money"));
-                    Material costItem = null;
-                    int costAmount = 0;
-                    Object ci = entry.get("cost-item");
-                    if (ci instanceof Map<?, ?> cm) {
-                        Object mat = cm.get("material");
-                        if (mat != null) {
-                            costItem = material(mat.toString(), file, "upgrades." + key + ".cost-item");
-                        }
-                        costAmount = toInt(cm.get("amount"));
-                    }
-                    int costXp = toInt(entry.get("cost-xp-levels"));
+                    Cost cost = Cost.parse(entry, "cost-", file, "upgrades." + key + ".level" + n);
                     String desc = entry.get("description") == null ? "" : entry.get("description").toString();
-                    levels.add(new UpgradeLevel(n, effect, costMoney, costItem, costAmount, costXp, desc));
+                    levels.add(new UpgradeLevel(n, effect, cost, desc));
                     n++;
                 }
                 b.upgrades.put(type, new UpgradeTrack(type, levels));
@@ -477,5 +488,7 @@ public final class FarmType {
         @Nullable Particle radiusParticle = null;
         int radiusParticleCount = 48;
         int radiusParticleInterval = 4;
+        boolean shopEnabled = true;
+        Cost shopCost = Cost.free();
     }
 }
