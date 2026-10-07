@@ -1,13 +1,13 @@
-# Wheat Farm — grows and harvests wheat automatically.
-id: wheat
-display-name: "<green>Wheat Farm</green>"
-description: "Grows and harvests wheat automatically."
+# Potato Farm — grows and harvests potatoes automatically.
+id: potato
+display-name: "<green>Potato Farm</green>"
+description: "Grows and harvests potatoes automatically."
 core-block: COMPOSTER
 item:
-  material: WHEAT_SEEDS
-  name: "<green>Wheat Farm</green>"
+  material: POTATO
+  name: "<green>Potato Farm</green>"
   lore:
-    - "<gray>Place to create an automated wheat farm.</gray>"
+    - "<gray>Place to create an automated potatoes farm.</gray>"
     - "<gray>Radius <white>{radius}</white> | Tick <white>{interval}s</white> | Storage <white>{slots}</white></gray>"
     - "<yellow>Right-click the placed farm to manage it.</yellow>"
 # Shop entry for /farm shop. Any combination of price-money (Vault/ForgeCore
@@ -51,8 +51,8 @@ fuel:
   items: [COAL, CHARCOAL]
   ticks-per-item: 1200
 harvest:
-  wheat:
-    material: WHEAT
+  potatoes:
+    material: POTATOES
     behavior: AGEABLE_CROP
 trees:
   enabled: false
@@ -61,7 +61,7 @@ offline:
 hologram:
   enabled: true
   lines:
-    - "<green><bold>Wheat Farm</bold></green>"
+    - "<green><bold>Potato Farm</bold></green>"
     - "<gray>{owner}</gray>"
     - "<yellow>Fuel {fuel_percent}%</yellow> <dark_gray>|</dark_gray> <aqua>{storage_used}/{storage_slots}</aqua>"
 upgrades:

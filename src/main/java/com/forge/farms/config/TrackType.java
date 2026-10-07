@@ -12,7 +12,9 @@ public enum TrackType {
     /** Expands virtual storage. Effect value = slot count. */
     STORAGE("storage"),
     /** Stretches fuel further. Effect value = fuel multiplier. */
-    EFFICIENCY("efficiency");
+    EFFICIENCY("efficiency"),
+    /** Auto-plows soil and hydrates farmland. Effect value = feature level (1 = till, 2 = till + hydrate). */
+    TILLING("tilling");
 
     private final String key;
 

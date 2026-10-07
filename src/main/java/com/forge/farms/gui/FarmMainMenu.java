@@ -15,6 +15,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 /** Hub menu: info + shortcuts to storage, fuel, upgrades, members, toggles. */
 public final class FarmMainMenu extends Menu {
     private final Farm farm;
+    private boolean deleteArmed;
 
     public FarmMainMenu(ForgeFarms plugin, Farm farm) {
         super(plugin);
@@ -30,7 +31,9 @@ public final class FarmMainMenu extends Menu {
 
         if (type != null) {
             List<String> info = new ArrayList<>();
-            info.add("<gray>" + type.description() + "</gray>");
+            for (String line : type.descriptionLines()) {
+                info.add("<gray>" + line + "</gray>");
+            }
             info.add("");
             info.add("<gray>Radius: <white>" + type.radiusAt(farm.radiusLevel()) + "</white></gray>");
             info.add("<gray>Tick: <white>" + (type.intervalAt(farm.speedLevel()) / 20.0) + "s</white></gray>");
@@ -51,7 +54,8 @@ public final class FarmMainMenu extends Menu {
                 "<gray>Radius <white>" + farm.radiusLevel() + "</white> | Speed <white>" + farm.speedLevel()
                         + "</white></gray>",
                 "<gray>Storage <white>" + farm.storageLevel() + "</white> | Efficiency <white>"
-                        + farm.efficiencyLevel() + "</white></gray>",
+                        + farm.efficiencyLevel() + "</white> | Tilling <white>"
+                        + farm.tillingLevel() + "</white></gray>",
                 "<yellow>Click to open.</yellow>"));
         inventory.setItem(13, button(Material.PLAYER_HEAD, "<gold>Members</gold>",
                 "<gray>Manage trusted players and roles.</gray>", "<yellow>Click to open.</yellow>"));
@@ -70,28 +74,38 @@ public final class FarmMainMenu extends Menu {
                 "<gold>Auto-sell</gold>",
                 "<gray>Currently: <white>" + (farm.autoSell() ? "ON" : "OFF") + "</white></gray>",
                 "<yellow>Click to toggle.</yellow>"));
-        inventory.setItem(17, button(Material.COMPARATOR, "<gold>Tuning</gold>",
-                "<gray>Growth, harvest, and effect knobs</gray>",
-                "<gray>for this farm. Overrides the type defaults.</gray>",
-                "<yellow>Click to open.</yellow>"));
+
+        boolean owner = viewer.getUniqueId().equals(farm.owner());
+        if (owner) {
+            List<String> delLore = new ArrayList<>();
+            delLore.add(deleteArmed
+                    ? "<red><bold>Click again to confirm deletion.</bold></red>"
+                    : "<gray>Permanently remove this farm.</gray>");
+            delLore.add("<gray>Stored items drop at your feet.</gray>");
+            delLore.add("");
+            delLore.add(deleteArmed ? "<red>Confirm delete.</red>" : "<red>Click to delete.</red>");
+            inventory.setItem(17, button(deleteArmed ? Material.TNT : Material.BARRIER,
+                    "<red>Delete farm</red>", delLore));
+        }
+        navRow();
     }
 
     @Override
     public void click(Player viewer, InventoryClickEvent event) {
-        if (!isTopClick(event)) {
+        if (!isTopClick(event) || navClick(viewer, event)) {
             return;
         }
         switch (event.getRawSlot()) {
-            case 10 -> plugin.menus().open(viewer, new FarmStorageMenu(plugin, farm));
-            case 11 -> plugin.menus().open(viewer, new FarmFuelMenu(plugin, farm));
+            case 10 -> plugin.menus().open(viewer, new FarmStorageMenu(plugin, farm).withParent(this));
+            case 11 -> plugin.menus().open(viewer, new FarmFuelMenu(plugin, farm).withParent(this));
             case 12 -> {
                 if (plugin.trust().can(viewer, farm, com.forge.farms.members.FarmFlag.UPGRADE)) {
-                    plugin.menus().open(viewer, new FarmUpgradesMenu(plugin, farm));
+                    plugin.menus().open(viewer, new FarmUpgradesMenu(plugin, farm).withParent(this));
                 } else {
                     viewer.sendMessage(Text.mm("<red>You can't buy upgrades on this farm.</red>"));
                 }
             }
-            case 13 -> plugin.menus().open(viewer, new FarmMembersMenu(plugin, farm));
+            case 13 -> plugin.menus().open(viewer, new FarmMembersMenu(plugin, farm).withParent(this));
             case 14 -> {
                 List<OutputMode> priority = farm.outputPriority();
                 if (!priority.isEmpty()) {
@@ -117,13 +131,32 @@ public final class FarmMainMenu extends Menu {
                 plugin.menus().refresh(viewer);
             }
             case 17 -> {
-                if (plugin.trust().can(viewer, farm, com.forge.farms.members.FarmFlag.CONFIGURE)) {
-                    plugin.menus().open(viewer, new FarmTuneMenu(plugin, farm));
-                } else {
-                    viewer.sendMessage(Text.mm("<red>You can't tune this farm.</red>"));
+                if (!viewer.getUniqueId().equals(farm.owner())) {
+                    return;
                 }
+                if (!deleteArmed) {
+                    deleteArmed = true;
+                    plugin.menus().refresh(viewer);
+                    return;
+                }
+                dropStorage(viewer);
+                if (plugin.farms().removeFarm(farm.id())) {
+                    viewer.sendMessage(Text.mm("<yellow>Farm deleted.</yellow>"));
+                }
+                viewer.closeInventory();
             }
             default -> {
+            }
+        }
+    }
+
+    /** Drop stored items at the owner's feet before deletion. */
+    private void dropStorage(Player viewer) {
+        org.bukkit.Location loc = viewer.getLocation();
+        for (int i = 0; i < farm.storageSlots(); i++) {
+            org.bukkit.inventory.ItemStack item = farm.getSlot(i);
+            if (item != null) {
+                loc.getWorld().dropItemNaturally(loc, item);
             }
         }
     }

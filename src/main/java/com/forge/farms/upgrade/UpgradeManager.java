@@ -104,6 +104,7 @@ public final class UpgradeManager {
             case SPEED -> "Speed";
             case STORAGE -> "Storage";
             case EFFICIENCY -> "Fuel efficiency";
+            case TILLING -> "Tilling";
         };
     }
 
@@ -116,6 +117,7 @@ public final class UpgradeManager {
                 case SPEED -> (type.baseTickInterval() / 20.0) + "s interval";
                 case STORAGE -> type.baseStorageSlots() + " slots";
                 case EFFICIENCY -> "x1.0 fuel";
+                case TILLING -> "No tilling";
             };
         }
         if (!lvl.description().isEmpty()) {
@@ -126,6 +128,15 @@ public final class UpgradeManager {
             case SPEED -> (lvl.effect() / 20.0) + "s interval";
             case STORAGE -> (int) lvl.effect() + " slots";
             case EFFICIENCY -> "x" + lvl.effect() + " fuel";
+            case TILLING -> tillingName((int) lvl.effect());
+        };
+    }
+
+    private static String tillingName(int level) {
+        return switch (level) {
+            case 1 -> "Auto-plow";
+            case 2 -> "Auto-plow + hydrate";
+            default -> "Tilling " + level;
         };
     }
 }

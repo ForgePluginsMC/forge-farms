@@ -26,6 +26,7 @@ public final class FarmType {
     private final String id;
     private final String displayName;
     private final String description;
+    private final List<String> descriptionLines;
     private final Material coreBlock;
     private final Material itemMaterial;
     private final String itemName;
@@ -36,6 +37,7 @@ public final class FarmType {
     private final int agePerSample;
     private final boolean harvestSweep;
     private final int maxHarvestsPerTick;
+    private final int tillAttempts;
     private final int baseStorageSlots;
     private final Set<Material> fuelItems;
     private final long fuelTicksPerItem;
@@ -49,6 +51,7 @@ public final class FarmType {
     private final @Nullable Particle harvestParticle;
     private final int harvestParticleCount;
     private final @Nullable Sound harvestSound;
+    private final String harvestSoundName;
     private final float harvestSoundVolume;
     private final float harvestSoundPitch;
     private final @Nullable Particle growthParticle;
@@ -60,11 +63,13 @@ public final class FarmType {
     private final int radiusParticleInterval;
     private final boolean shopEnabled;
     private final Cost shopCost;
+    private final String shopCategory;
 
     private FarmType(Builder b) {
         this.id = b.id;
         this.displayName = b.displayName;
         this.description = b.description;
+        this.descriptionLines = List.copyOf(b.descriptionLines);
         this.coreBlock = b.coreBlock;
         this.itemMaterial = b.itemMaterial;
         this.itemName = b.itemName;
@@ -85,9 +90,11 @@ public final class FarmType {
         this.agePerSample = b.agePerSample;
         this.harvestSweep = b.harvestSweep;
         this.maxHarvestsPerTick = b.maxHarvestsPerTick;
+        this.tillAttempts = b.tillAttempts;
         this.harvestParticle = b.harvestParticle;
         this.harvestParticleCount = b.harvestParticleCount;
         this.harvestSound = b.harvestSound;
+        this.harvestSoundName = b.harvestSoundName;
         this.harvestSoundVolume = b.harvestSoundVolume;
         this.harvestSoundPitch = b.harvestSoundPitch;
         this.growthParticle = b.growthParticle;
@@ -99,6 +106,7 @@ public final class FarmType {
         this.radiusParticleInterval = b.radiusParticleInterval;
         this.shopEnabled = b.shopEnabled;
         this.shopCost = b.shopCost;
+        this.shopCategory = b.shopCategory;
     }
 
     public String id() {
@@ -111,6 +119,11 @@ public final class FarmType {
 
     public String description() {
         return description;
+    }
+
+    /** Description as individual lines (single-string configs yield one line). */
+    public List<String> descriptionLines() {
+        return descriptionLines;
     }
 
     public Material coreBlock() {
@@ -154,6 +167,11 @@ public final class FarmType {
     /** Cap on harvests per tick (sampling + sweep). 0 = unlimited. */
     public int maxHarvestsPerTick() {
         return maxHarvestsPerTick;
+    }
+
+    /** Soil blocks sampled per tick for tilling/hydration. */
+    public int tillAttempts() {
+        return tillAttempts;
     }
 
     public int baseStorageSlots() {
@@ -208,6 +226,11 @@ public final class FarmType {
         return harvestSound;
     }
 
+    /** The raw Bukkit-style sound name from the config (BLOCK_CROP_BREAK), or "NONE". */
+    public String harvestSoundName() {
+        return harvestSoundName;
+    }
+
     public float harvestSoundVolume() {
         return harvestSoundVolume;
     }
@@ -255,6 +278,11 @@ public final class FarmType {
     /** Purchase price in the shop (Cost.free() = no charge). */
     public Cost shopCost() {
         return shopCost;
+    }
+
+    /** Shop grouping, e.g. "Crops". Used to order the /farm shop GUI. */
+    public String shopCategory() {
+        return shopCategory;
     }
 
     /** Radius in blocks at the given radius-track level (0 = base). */
@@ -311,7 +339,20 @@ public final class FarmType {
         Builder b = new Builder();
         b.id = c.getString("id", stripExt(file.getName())).toLowerCase(Locale.ROOT);
         b.displayName = c.getString("display-name", b.id);
-        b.description = c.getString("description", "");
+        // Description may be a single string or a list of lines.
+        Object descRaw = c.get("description");
+        List<String> descLines = new ArrayList<>();
+        if (descRaw instanceof List<?> list) {
+            for (Object o : list) {
+                if (o != null) {
+                    descLines.add(o.toString());
+                }
+            }
+        } else if (descRaw != null) {
+            descLines.add(descRaw.toString());
+        }
+        b.descriptionLines = descLines;
+        b.description = String.join(" ", descLines);
         b.coreBlock = material(c.getString("core-block", "COMPOSTER"), file, "core-block");
         b.itemMaterial = material(c.getString("item.material", "WHEAT_SEEDS"), file, "item.material");
         b.itemName = c.getString("item.name", b.displayName);
@@ -322,10 +363,13 @@ public final class FarmType {
         b.agePerSample = Math.max(1, c.getInt("farm.age-per-sample", 1));
         b.harvestSweep = c.getBoolean("farm.harvest-sweep", false);
         b.maxHarvestsPerTick = Math.max(0, c.getInt("farm.max-harvests-per-tick", 24));
+        b.tillAttempts = Math.max(1, c.getInt("farm.till-attempts", 8));
         b.baseStorageSlots = Math.max(1, c.getInt("storage.base-slots", 27));
         b.harvestParticle = parseParticle(c.getString("effects.harvest-particle"), file);
         b.harvestParticleCount = Math.max(1, c.getInt("effects.harvest-particle-count", 8));
         b.harvestSound = parseSound(c.getString("effects.harvest-sound"), file);
+        String rawSound = c.getString("effects.harvest-sound");
+        b.harvestSoundName = rawSound == null || rawSound.isBlank() ? "NONE" : rawSound.toUpperCase(Locale.ROOT);
         b.harvestSoundVolume = (float) c.getDouble("effects.harvest-sound-volume", 0.6);
         b.harvestSoundPitch = (float) c.getDouble("effects.harvest-sound-pitch", 1.1);
         b.growthParticle = parseParticle(c.getString("effects.growth-particle"), file);
@@ -339,9 +383,11 @@ public final class FarmType {
         if (shop != null) {
             b.shopEnabled = shop.getBoolean("enabled", true);
             b.shopCost = Cost.parse(shop.getValues(false), "price-", file, "shop");
+            b.shopCategory = shop.getString("category", "Crops");
         } else {
             b.shopEnabled = true;
             b.shopCost = Cost.free();
+            b.shopCategory = "Crops";
         }
         for (String s : c.getStringList("fuel.items")) {
             b.fuelItems.add(material(s, file, "fuel.items"));
@@ -434,15 +480,22 @@ public final class FarmType {
         if (name == null || name.isBlank() || name.equalsIgnoreCase("none")) {
             return null;
         }
-        // Sound.valueOf is deprecated for removal in 26.3; the registry is
-        // the supported path. Enum names map to keys: BLOCK_CROP_BREAK ->
-        // minecraft:block.crop_break.
-        Sound sound = org.bukkit.Registry.SOUNDS.get(
-                NamespacedKey.minecraft(name.toLowerCase(Locale.ROOT).replace('_', '.')));
+        Sound sound = soundByBukkitName(name);
         if (sound == null) {
             throw new IllegalArgumentException(file.getName() + ": unknown sound '" + name + "'");
         }
         return sound;
+    }
+
+    /**
+     * Resolve a Bukkit-style sound name (BLOCK_CROP_BREAK) via the registry.
+     * Sound.valueOf is deprecated for removal in 26.3; the registry is the
+     * supported path. Enum names map to keys: BLOCK_CROP_BREAK ->
+     * minecraft:block.crop_break.
+     */
+    public static @Nullable Sound soundByBukkitName(String name) {
+        return org.bukkit.Registry.SOUNDS.get(
+                NamespacedKey.minecraft(name.toLowerCase(Locale.ROOT).replace('_', '.')));
     }
 
     private static int toInt(@Nullable Object o) {
@@ -456,6 +509,7 @@ public final class FarmType {
         String id = "";
         String displayName = "";
         String description = "";
+        List<String> descriptionLines = new ArrayList<>();
         Material coreBlock = Material.COMPOSTER;
         Material itemMaterial = Material.WHEAT_SEEDS;
         String itemName = "";
@@ -466,6 +520,7 @@ public final class FarmType {
         int agePerSample = 1;
         boolean harvestSweep = false;
         int maxHarvestsPerTick = 24;
+        int tillAttempts = 8;
         int baseStorageSlots = 27;
         Set<Material> fuelItems = new HashSet<>();
         long fuelTicksPerItem = 1200L;
@@ -479,6 +534,7 @@ public final class FarmType {
         @Nullable Particle harvestParticle = null;
         int harvestParticleCount = 8;
         @Nullable Sound harvestSound = null;
+        String harvestSoundName = "NONE";
         float harvestSoundVolume = 0.6f;
         float harvestSoundPitch = 1.1f;
         @Nullable Particle growthParticle = null;
@@ -490,5 +546,6 @@ public final class FarmType {
         int radiusParticleInterval = 4;
         boolean shopEnabled = true;
         Cost shopCost = Cost.free();
+        String shopCategory = "Crops";
     }
 }

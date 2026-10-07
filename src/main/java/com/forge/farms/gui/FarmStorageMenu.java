@@ -11,30 +11,42 @@ import org.bukkit.inventory.ItemStack;
 
 /**
  * Virtual storage view. Click an item to withdraw it into your inventory.
- * Shows up to 54 slots; larger farms show the first 54.
+ * 45 slots per page; the bottom row is navigation.
  */
 public final class FarmStorageMenu extends Menu {
+    private static final int PER_PAGE = 45;
     private final Farm farm;
+    private final int page;
 
     public FarmStorageMenu(ForgeFarms plugin, Farm farm) {
+        this(plugin, farm, 0);
+    }
+
+    private FarmStorageMenu(ForgeFarms plugin, Farm farm, int page) {
         super(plugin);
         this.farm = farm;
+        this.page = page;
     }
 
     @Override
     public void build(Player viewer) {
+        int pages = Math.max(1, (farm.storageSlots() + PER_PAGE - 1) / PER_PAGE);
+        int p = Math.min(page, pages - 1);
         create(viewer, 54, "<dark_green><bold>Farm Storage</bold></dark_green> <gray>("
-                + farm.usedSlots() + "/" + farm.storageSlots() + ")</gray>");
-        int shown = Math.min(54, farm.storageSlots());
-        for (int i = 0; i < shown; i++) {
-            ItemStack item = farm.getSlot(i);
+                + farm.usedSlots() + "/" + farm.storageSlots()
+                + (pages > 1 ? " · " + (p + 1) + "/" + pages : "") + ")</gray>");
+        int start = p * PER_PAGE;
+        for (int i = 0; i < PER_PAGE && start + i < farm.storageSlots(); i++) {
+            ItemStack item = farm.getSlot(start + i);
             inventory.setItem(i, item);
         }
-        if (farm.storageSlots() > 54) {
-            inventory.setItem(53, button(Material.PAPER, "<yellow>More slots</yellow>",
-                    "<gray>This farm has <white>" + farm.storageSlots()
-                            + "</white> slots; showing the first 54.</gray>"));
+        if (p > 0) {
+            inventory.setItem(48, button(Material.ARROW, "<yellow>Previous page</yellow>"));
         }
+        if (p < pages - 1) {
+            inventory.setItem(50, button(Material.ARROW, "<yellow>Next page</yellow>"));
+        }
+        navRow();
     }
 
     @Override
@@ -42,8 +54,24 @@ public final class FarmStorageMenu extends Menu {
         if (!isTopClick(event)) {
             return;
         }
-        int slot = event.getRawSlot();
-        if (slot < 0 || slot >= Math.min(54, farm.storageSlots())) {
+        int raw = event.getRawSlot();
+        int pages = Math.max(1, (farm.storageSlots() + PER_PAGE - 1) / PER_PAGE);
+        if (raw == 48 && page > 0) {
+            plugin.menus().open(viewer, new FarmStorageMenu(plugin, farm, page - 1).withParent(parent()));
+            return;
+        }
+        if (raw == 50 && page < pages - 1) {
+            plugin.menus().open(viewer, new FarmStorageMenu(plugin, farm, page + 1).withParent(parent()));
+            return;
+        }
+        if (navClick(viewer, event)) {
+            return;
+        }
+        if (raw < 0 || raw >= PER_PAGE) {
+            return;
+        }
+        int slot = page * PER_PAGE + raw;
+        if (slot >= farm.storageSlots()) {
             return;
         }
         ItemStack stored = farm.getSlot(slot);

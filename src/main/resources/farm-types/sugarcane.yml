@@ -16,6 +16,7 @@ item:
 # Shop entry for /farm shop.
 shop:
   enabled: true
+  category: Stalks
   price-money: 3000.0
   price-xp-levels: 12
 farm:
@@ -25,6 +26,7 @@ farm:
   age-per-sample: 1
   harvest-sweep: true
   max-harvests-per-tick: 16
+  till-attempts: 8
 effects:
   harvest-particle: HAPPY_VILLAGER
   harvest-particle-count: 8

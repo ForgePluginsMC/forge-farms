@@ -25,6 +25,7 @@ public final class ConfigManager {
 
     private final ForgeFarms plugin;
     private final Map<String, FarmType> types = new LinkedHashMap<>();
+    private final Map<String, File> typeFiles = new LinkedHashMap<>();
 
     private String dbType = "sqlite";
     private String mysqlHost = "localhost";
@@ -84,12 +85,14 @@ public final class ConfigManager {
             }
         }
         types.clear();
+        typeFiles.clear();
         File[] files = dir.listFiles((d, name) -> name.endsWith(".yml"));
         if (files != null) {
             for (File f : files) {
                 try {
                     FarmType type = FarmType.load(f);
                     types.put(type.id(), type);
+                    typeFiles.put(type.id(), f);
                     plugin.getLogger().info("Loaded farm type '" + type.id() + "'.");
                 } catch (IllegalArgumentException e) {
                     plugin.getLogger().log(Level.WARNING, "Skipping farm type " + f.getName() + ": " + e.getMessage());
@@ -103,6 +106,45 @@ public final class ConfigManager {
 
     public void reload() {
         load();
+    }
+
+    /**
+     * Re-read a single farm type from its yml file (used by the admin
+     * tuning GUI after it rewrites values). Returns false when the file
+     * is missing or fails to parse; the old definition stays live.
+     */
+    public boolean reloadType(String id) {
+        if (id == null) {
+            return false;
+        }
+        String key = id.toLowerCase(Locale.ROOT);
+        File f = typeFiles.get(key);
+        if (f == null || !f.isFile()) {
+            return false;
+        }
+        try {
+            FarmType type = FarmType.load(f);
+            if (!type.id().equals(key)) {
+                types.remove(key);
+                typeFiles.remove(key);
+            }
+            types.put(type.id(), type);
+            typeFiles.put(type.id(), f);
+            plugin.getLogger().info("Reloaded farm type '" + type.id() + "'.");
+            return true;
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().log(Level.WARNING,
+                    "Failed to reload farm type " + f.getName() + ": " + e.getMessage());
+            return false;
+        }
+    }
+
+    /** The yml file a farm type was loaded from, or null. */
+    public @Nullable File typeFile(String id) {
+        if (id == null) {
+            return null;
+        }
+        return typeFiles.get(id.toLowerCase(Locale.ROOT));
     }
 
     public @Nullable FarmType getType(String id) {
@@ -163,5 +205,14 @@ public final class ConfigManager {
     /** Sell price per item, or null when the material has no price. */
     public @Nullable Double sellPrice(Material material) {
         return sellPrices.get(material);
+    }
+
+    /** All sell prices as Bukkit names, for the admin GUI. */
+    public java.util.Map<String, Double> sellPrices() {
+        java.util.Map<String, Double> out = new java.util.TreeMap<>();
+        for (java.util.Map.Entry<Material, Double> e : sellPrices.entrySet()) {
+            out.put(e.getKey().name(), e.getValue());
+        }
+        return out;
     }
 }

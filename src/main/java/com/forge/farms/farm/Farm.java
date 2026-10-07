@@ -4,9 +4,7 @@ import com.forge.farms.config.TrackType;
 import com.forge.farms.output.OutputMode;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
@@ -19,18 +17,6 @@ import org.jetbrains.annotations.Nullable;
  * GUIs on the main thread.
  */
 public final class Farm {
-    /** Per-farm tuning knobs, overriding the farm type's defaults. */
-    public static final String SETTING_GROWTH_ATTEMPTS = "growth-attempts";
-    public static final String SETTING_AGE_PER_SAMPLE = "age-per-sample";
-    public static final String SETTING_HARVEST_SWEEP = "harvest-sweep";
-    public static final String SETTING_MAX_HARVESTS_PER_TICK = "max-harvests-per-tick";
-    public static final String SETTING_FX_HARVEST_PARTICLES = "fx-harvest-particles";
-    public static final String SETTING_FX_HARVEST_SOUND = "fx-harvest-sound";
-    public static final String SETTING_FX_WORKING_AURA = "fx-working-aura";
-    public static final String SETTING_FX_RADIUS_RING = "fx-radius-ring";
-
-    private static final com.google.gson.Gson GSON = new com.google.gson.Gson();
-
     private final UUID id;
     private final UUID owner;
     private final String typeId;
@@ -43,6 +29,7 @@ public final class Farm {
     private int speedLevel;
     private int storageLevel;
     private int efficiencyLevel;
+    private int tillingLevel;
     private long fuelTicks;
     private ItemStack[] storage;
     private int storageSlots;
@@ -52,11 +39,10 @@ public final class Farm {
     private long totalHarvested;
     private final long createdAt;
     private long lastTickAt;
-    private final Map<String, String> settings = new HashMap<>();
 
     public Farm(UUID id, UUID owner, String typeId, UUID worldId,
             int x, int y, int z,
-            int radiusLevel, int speedLevel, int storageLevel, int efficiencyLevel,
+            int radiusLevel, int speedLevel, int storageLevel, int efficiencyLevel, int tillingLevel,
             long fuelTicks, List<OutputMode> outputPriority,
             boolean autoSell, boolean hologramEnabled,
             long totalHarvested, long createdAt, long lastTickAt) {
@@ -71,6 +57,7 @@ public final class Farm {
         this.speedLevel = speedLevel;
         this.storageLevel = storageLevel;
         this.efficiencyLevel = efficiencyLevel;
+        this.tillingLevel = tillingLevel;
         this.fuelTicks = Math.max(0L, fuelTicks);
         this.outputPriority = new ArrayList<>(outputPriority);
         this.autoSell = autoSell;
@@ -87,7 +74,7 @@ public final class Farm {
         long now = System.currentTimeMillis();
         return new Farm(UUID.randomUUID(), owner, typeId, core.getWorld().getUID(),
                 core.getBlockX(), core.getBlockY(), core.getBlockZ(),
-                0, 0, 0, 0, 0L,
+                0, 0, 0, 0, 0, 0L,
                 new ArrayList<>(List.of(OutputMode.STORAGE, OutputMode.HOPPER, OutputMode.SELL)),
                 true, hologramDefault, 0L, now, now);
     }
@@ -136,12 +123,17 @@ public final class Farm {
         return efficiencyLevel;
     }
 
+    public synchronized int tillingLevel() {
+        return tillingLevel;
+    }
+
     public synchronized int getLevel(TrackType track) {
         return switch (track) {
             case RADIUS -> radiusLevel;
             case SPEED -> speedLevel;
             case STORAGE -> storageLevel;
             case EFFICIENCY -> efficiencyLevel;
+            case TILLING -> tillingLevel;
         };
     }
 
@@ -151,6 +143,7 @@ public final class Farm {
             case SPEED -> speedLevel = level;
             case STORAGE -> storageLevel = level;
             case EFFICIENCY -> efficiencyLevel = level;
+            case TILLING -> tillingLevel = level;
         }
     }
 
@@ -195,67 +188,6 @@ public final class Farm {
     /** Used by the database load path before slots are known. */
     public synchronized void setRawStorage(ItemStack[] raw) {
         this.storage = raw.clone();
-    }
-
-    /** Raw override value for a tuning knob, or null when using the type default. */
-    public synchronized @Nullable String getSetting(String key) {
-        return settings.get(key);
-    }
-
-    public synchronized void setSetting(String key, String value) {
-        settings.put(key, value);
-    }
-
-    public synchronized void removeSetting(String key) {
-        settings.remove(key);
-    }
-
-    public synchronized boolean hasCustomSettings() {
-        return !settings.isEmpty();
-    }
-
-    public synchronized void clearSettings() {
-        settings.clear();
-    }
-
-    public synchronized int intSetting(String key, int def) {
-        String v = settings.get(key);
-        if (v == null) {
-            return def;
-        }
-        try {
-            return Integer.parseInt(v);
-        } catch (NumberFormatException e) {
-            return def;
-        }
-    }
-
-    public synchronized boolean boolSetting(String key, boolean def) {
-        String v = settings.get(key);
-        return v == null ? def : Boolean.parseBoolean(v);
-    }
-
-    /** JSON for the database. */
-    public synchronized String settingsJson() {
-        return GSON.toJson(settings);
-    }
-
-    /** From the database. */
-    public synchronized void loadSettingsJson(@Nullable String json) {
-        settings.clear();
-        if (json == null || json.isBlank()) {
-            return;
-        }
-        try {
-            Map<String, String> loaded = GSON.fromJson(json,
-                    new com.google.gson.reflect.TypeToken<Map<String, String>>() {
-                    }.getType());
-            if (loaded != null) {
-                settings.putAll(loaded);
-            }
-        } catch (com.google.gson.JsonSyntaxException ignored) {
-            // Corrupt settings are dropped in favor of type defaults.
-        }
     }
 
     public synchronized void resizeStorage(int slots) {

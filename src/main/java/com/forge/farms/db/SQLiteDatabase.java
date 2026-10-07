@@ -59,16 +59,7 @@ public final class SQLiteDatabase extends Database {
                 try (Statement s = connection().createStatement()) {
                     s.execute(DDL_FARMS);
                     s.execute(DDL_MEMBERS);
-                }
-                // v2: per-farm tuning knobs
-                try (Statement s = connection().createStatement()) {
-                    s.execute("ALTER TABLE forgefarms_farms ADD COLUMN settings MEDIUMTEXT");
-                } catch (SQLException e) {
-                    if (e.getMessage() == null
-                            || !e.getMessage().toLowerCase(java.util.Locale.ROOT).contains("duplicate")) {
-                        throw e;
-                    }
-                    // Column already exists — nothing to do.
+                    ensureColumn(s, "forgefarms_farms", "tilling_level", "INT NOT NULL DEFAULT 0");
                 }
             } catch (SQLException e) {
                 throw new IllegalStateException("Failed to migrate SQLite schema", e);

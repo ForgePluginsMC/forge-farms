@@ -84,6 +84,15 @@ public final class HologramManager {
         holograms.clear();
     }
 
+    /** Refresh holograms of every farm of one type (used after admin edits). */
+    public void refreshAll(String typeId) {
+        for (Farm farm : plugin.farms().all()) {
+            if (farm.typeId().equalsIgnoreCase(typeId)) {
+                refresh(farm);
+            }
+        }
+    }
+
     private @Nullable TextDisplay find(Farm farm) {
         UUID entityId = holograms.get(farm.id());
         if (entityId == null) {

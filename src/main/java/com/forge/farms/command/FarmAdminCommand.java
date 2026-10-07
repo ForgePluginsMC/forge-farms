@@ -54,6 +54,7 @@ public final class FarmAdminCommand implements CommandExecutor, TabCompleter {
             case "limits" -> limits(sender);
             case "remove" -> remove(sender, args);
             case "list" -> list(sender, args);
+            case "tune" -> tune(sender);
             case "help" -> help(sender);
             default -> sender.sendMessage(Text.mm("<red>Unknown subcommand. <gray>/farmadmin help</gray></red>"));
         }
@@ -250,6 +251,15 @@ public final class FarmAdminCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Text.mm("<white>/farmadmin limits</white> <gray>— show config + status</gray>"));
         sender.sendMessage(Text.mm("<white>/farmadmin remove <id></white>"));
         sender.sendMessage(Text.mm("<white>/farmadmin list [player]</white>"));
+        sender.sendMessage(Text.mm("<white>/farmadmin tune</white> <gray>— in-game farm type editor</gray>"));
+    }
+
+    private void tune(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Text.mm("<red>Only players can use the tuning GUI.</red>"));
+            return;
+        }
+        plugin.menus().open(player, new com.forge.farms.gui.admin.TypeListMenu(plugin));
     }
 
     @Override
@@ -258,7 +268,7 @@ public final class FarmAdminCommand implements CommandExecutor, TabCompleter {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
             for (String s : List.of("give", "reload", "migrate", "backup", "restore", "limits", "remove",
-                    "list", "help")) {
+                    "list", "tune", "help")) {
                 if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) {
                     out.add(s);
                 }

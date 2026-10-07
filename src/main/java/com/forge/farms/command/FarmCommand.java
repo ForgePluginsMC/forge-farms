@@ -5,6 +5,7 @@ import com.forge.farms.api.ForgeFarmsAPI;
 import com.forge.farms.config.FarmType;
 import com.forge.farms.core.Text;
 import com.forge.farms.farm.Farm;
+import com.forge.farms.gui.FarmListMenu;
 import com.forge.farms.gui.FarmMainMenu;
 import com.forge.farms.members.FarmFlag;
 import com.forge.farms.members.FarmRole;
@@ -116,18 +117,10 @@ public final class FarmCommand implements CommandExecutor, TabCompleter {
         }
         List<Farm> farms = plugin.farms().getByOwner(player.getUniqueId());
         if (farms.isEmpty()) {
-            player.sendMessage(Text.mm("<gray>You don't own any farms yet. <white>/farm get wheat</white></gray>"));
+            player.sendMessage(Text.mm("<gray>You don't own any farms yet. <white>/farm shop</white></gray>"));
             return;
         }
-        player.sendMessage(Text.mm("<dark_green><bold>Your farms (" + farms.size() + ")</bold></dark_green>"));
-        for (Farm farm : farms) {
-            FarmType type = plugin.config().getType(farm.typeId());
-            String name = type == null ? farm.typeId() : Text.plain(type.displayName());
-            String id = farm.id().toString().substring(0, 8);
-            player.sendMessage(Text.mm("<gray>- <white>" + name + "</white> <dark_gray>[" + id + "]</dark_gray> "
-                    + "<gray>at " + farm.x() + ", " + farm.y() + ", " + farm.z()
-                    + " | fuel " + plugin.fuel().formatDuration(farm.fuelTicks()) + "</gray>"));
-        }
+        plugin.menus().open(player, new FarmListMenu(plugin, player));
     }
 
     private void menu(CommandSender sender, String[] args) {

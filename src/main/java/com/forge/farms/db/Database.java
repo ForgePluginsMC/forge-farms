@@ -43,6 +43,19 @@ public abstract class Database {
     /** Create tables if missing. */
     public abstract void migrate();
 
+    /**
+     * Add a column to an existing table if it is missing. Neither SQLite nor
+     * MySQL 8 support {@code ADD COLUMN IF NOT EXISTS} portably, so a failed
+     * ALTER is treated as "already there".
+     */
+    protected static void ensureColumn(java.sql.Statement s, String table, String column, String type) {
+        try {
+            s.execute("ALTER TABLE " + table + " ADD COLUMN " + column + " " + type);
+        } catch (java.sql.SQLException ignored) {
+            // Column already exists.
+        }
+    }
+
     public abstract List<Farm> loadFarms();
 
     public abstract void saveFarm(Farm farm);
@@ -93,6 +106,7 @@ public abstract class Database {
             + "world CHAR(36) NOT NULL, x INT NOT NULL, y INT NOT NULL, z INT NOT NULL, "
             + "radius_level INT NOT NULL DEFAULT 0, speed_level INT NOT NULL DEFAULT 0, "
             + "storage_level INT NOT NULL DEFAULT 0, efficiency_level INT NOT NULL DEFAULT 0, "
+            + "tilling_level INT NOT NULL DEFAULT 0, "
             + "fuel_ticks BIGINT NOT NULL DEFAULT 0, storage MEDIUMTEXT, "
             + "output_priority VARCHAR(64) NOT NULL DEFAULT 'STORAGE,HOPPER,SELL', "
             + "auto_sell INT NOT NULL DEFAULT 1, hologram INT NOT NULL DEFAULT 1, "
@@ -112,9 +126,12 @@ public abstract class Database {
      */
     protected static final String[] FARM_COLS = {
         "id", "owner", "type", "world", "x", "y", "z",
-        "radius_level", "speed_level", "storage_level", "efficiency_level",
+        "radius_level", "speed_level", "storage_level", "efficiency_level", "tilling_level",
         "fuel_ticks", "storage", "output_priority", "auto_sell", "hologram",
-        "total_harvested", "created_at", "last_tick", "settings"
+        "total_harvested", "created_at", "last_tick"
+        // Note: a "settings" column may exist from the short-lived per-farm
+        // tuning experiment (v1.0.0, Oct 6 2026). It is intentionally not
+        // referenced here; tuning is now per farm TYPE via the admin GUI.
     };
 
     protected static String farmColumnList() {
@@ -145,15 +162,15 @@ public abstract class Database {
         ps.setInt(9, farm.speedLevel());
         ps.setInt(10, farm.storageLevel());
         ps.setInt(11, farm.efficiencyLevel());
-        ps.setLong(12, farm.fuelTicks());
-        ps.setString(13, encodeStorage(farm.storageSnapshot()));
-        ps.setString(14, joinPriority(farm.outputPriority()));
-        ps.setInt(15, farm.autoSell() ? 1 : 0);
-        ps.setInt(16, farm.hologramEnabled() ? 1 : 0);
-        ps.setLong(17, farm.totalHarvested());
-        ps.setLong(18, farm.createdAt());
-        ps.setLong(19, farm.lastTickAt());
-        ps.setString(20, farm.settingsJson());
+        ps.setInt(12, farm.tillingLevel());
+        ps.setLong(13, farm.fuelTicks());
+        ps.setString(14, encodeStorage(farm.storageSnapshot()));
+        ps.setString(15, joinPriority(farm.outputPriority()));
+        ps.setInt(16, farm.autoSell() ? 1 : 0);
+        ps.setInt(17, farm.hologramEnabled() ? 1 : 0);
+        ps.setLong(18, farm.totalHarvested());
+        ps.setLong(19, farm.createdAt());
+        ps.setLong(20, farm.lastTickAt());
     }
 
     /** Rebuild a farm from a row selected in FARM_COLS order (or by name). */
@@ -183,11 +200,11 @@ public abstract class Database {
                 rs.getInt("x"), rs.getInt("y"), rs.getInt("z"),
                 rs.getInt("radius_level"), rs.getInt("speed_level"),
                 rs.getInt("storage_level"), rs.getInt("efficiency_level"),
+                rs.getInt("tilling_level"),
                 rs.getLong("fuel_ticks"), priority,
                 rs.getInt("auto_sell") != 0, rs.getInt("hologram") != 0,
                 rs.getLong("total_harvested"), rs.getLong("created_at"), rs.getLong("last_tick"));
         farm.setRawStorage(decodeStorage(rs.getString("storage"), rawSlots));
-        farm.loadSettingsJson(rs.getString("settings"));
         return farm;
     }
 

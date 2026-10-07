@@ -10,6 +10,7 @@ import com.forge.farms.db.Database;
 import com.forge.farms.farm.FarmManager;
 import com.forge.farms.fuel.FuelManager;
 import com.forge.farms.growth.GrowthEngine;
+import com.forge.farms.gui.ChatPrompt;
 import com.forge.farms.gui.MenuManager;
 import com.forge.farms.hologram.HologramManager;
 import com.forge.farms.listener.FarmListener;
@@ -39,6 +40,7 @@ public final class ForgeFarms extends JavaPlugin {
     private OutputPipeline outputPipeline;
     private MenuManager menuManager;
     private ShopManager shopManager;
+    private ChatPrompt chatPrompt;
 
     /** Plugin instance for static access (keys, API). */
     public static ForgeFarms getInstance() {
@@ -66,6 +68,7 @@ public final class ForgeFarms extends JavaPlugin {
             outputPipeline = new OutputPipeline(this);
             menuManager = new MenuManager(this);
             shopManager = new ShopManager(this);
+            chatPrompt = new ChatPrompt(this);
 
             // Load persisted farms, then start their ticks and holograms.
             scheduler.async(() -> {
@@ -80,6 +83,7 @@ public final class ForgeFarms extends JavaPlugin {
 
             getServer().getPluginManager().registerEvents(new FarmListener(this), this);
             getServer().getPluginManager().registerEvents(menuManager, this);
+            getServer().getPluginManager().registerEvents(chatPrompt, this);
 
             var farmCmd = new FarmCommand(this);
             var farmPluginCmd = getCommand("farm");
@@ -175,5 +179,9 @@ public final class ForgeFarms extends JavaPlugin {
 
     public ShopManager shop() {
         return shopManager;
+    }
+
+    public ChatPrompt prompts() {
+        return chatPrompt;
     }
 }

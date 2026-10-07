@@ -61,10 +61,14 @@ public final class FarmFuelMenu extends Menu {
         fuels.add("");
         fuels.add("<yellow>Hold fuel and right-click the farm core to add it.</yellow>");
         inventory.setItem(22, button(Material.COAL, "<gold>How to refuel</gold>", fuels));
+        navRow();
     }
 
     @Override
     public void click(Player viewer, InventoryClickEvent event) {
-        // Display-only.
+        // Display-only, except navigation.
+        if (isTopClick(event)) {
+            navClick(viewer, event);
+        }
     }
 }

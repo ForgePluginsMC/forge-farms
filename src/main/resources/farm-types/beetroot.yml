@@ -1,13 +1,13 @@
-# Wheat Farm — grows and harvests wheat automatically.
-id: wheat
-display-name: "<green>Wheat Farm</green>"
-description: "Grows and harvests wheat automatically."
+# Beetroot Farm — grows and harvests beetroots automatically.
+id: beetroot
+display-name: "<green>Beetroot Farm</green>"
+description: "Grows and harvests beetroots automatically."
 core-block: COMPOSTER
 item:
-  material: WHEAT_SEEDS
-  name: "<green>Wheat Farm</green>"
+  material: BEETROOT_SEEDS
+  name: "<green>Beetroot Farm</green>"
   lore:
-    - "<gray>Place to create an automated wheat farm.</gray>"
+    - "<gray>Place to create an automated beetroots farm.</gray>"
     - "<gray>Radius <white>{radius}</white> | Tick <white>{interval}s</white> | Storage <white>{slots}</white></gray>"
     - "<yellow>Right-click the placed farm to manage it.</yellow>"
 # Shop entry for /farm shop. Any combination of price-money (Vault/ForgeCore
@@ -16,7 +16,7 @@ item:
 shop:
   enabled: true
   category: Crops
-  price-money: 1500.0
+  price-money: 1800.0
   price-xp-levels: 8
 farm:
   base-radius: 4
@@ -51,8 +51,8 @@ fuel:
   items: [COAL, CHARCOAL]
   ticks-per-item: 1200
 harvest:
-  wheat:
-    material: WHEAT
+  beetroots:
+    material: BEETROOTS
     behavior: AGEABLE_CROP
 trees:
   enabled: false
@@ -61,7 +61,7 @@ offline:
 hologram:
   enabled: true
   lines:
-    - "<green><bold>Wheat Farm</bold></green>"
+    - "<green><bold>Beetroot Farm</bold></green>"
     - "<gray>{owner}</gray>"
     - "<yellow>Fuel {fuel_percent}%</yellow> <dark_gray>|</dark_gray> <aqua>{storage_used}/{storage_slots}</aqua>"
 upgrades:

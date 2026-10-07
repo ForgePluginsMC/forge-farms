@@ -26,25 +26,26 @@ An original implementation written from scratch for Paper 26.3. Folia-compatible
 ## Feature highlights
 
 - **Automated farms** — place a farm item to create a farm core; growth ticks sample random blocks in the radius, accelerate ageable crops, and harvest into the output pipeline
-- **Crop, tree & stalk farms** — ageable crops (wheat, carrots, potatoes, beetroots, nether wart, sweet berries, cocoa, pitcher plants, torchflowers), stem fruit (melon/pumpkin), stalks (sugar cane, cactus, bamboo, kelp), and full tree farms via `StructureGrowEvent` capture with automatic replanting
-- **Per-farm tuning GUI** — every behavior knob (growth attempts, growth boost, harvest sweep, harvest cap, and every particle/sound effect) adjustable live in-game per farm, persisted as overrides; reset to type defaults with one click
+- **One farm per crop** — wheat, carrot, potato, beetroot, nether wart, sweet berry, cocoa, pitcher, and torchflower farms, plus oak (trees), sugar cane (stalks), and melon (stem fruit); each tunable per crop in-game
+- **Tilling upgrade** — farms can auto-plow dirt/grass into farmland (level 1) and keep it fully hydrated with no water needed (level 2)
+- **Admin tuning GUI** — `/farmadmin tune` opens the full in-game farm-type editor: behavior knobs, particle/sound pickers, fuel items, harvestable crops, upgrade levels and costs, shop price, hologram lines, server settings — every value in `farm-types/*.yml` editable live, no restart, no commands
 - **Trust system (built in)** — roles (Owner/Admin/Member/Guest) with granular flags: block break/place, harvest, plant, interact, upgrade, fuel, configure, delete. Replaces paid ChestProtect-style dependencies
 - **Hopper automation (built in)** — harvests push into any container adjacent to the farm core. No hopper-upgrade item needed. Replaces paid UpgradeableHoppers-style dependencies
 - **Holograms (built in)** — floating `TextDisplay` holograms above each farm core with live fuel/storage/radius placeholders. No armor stands, no HolographicDisplays. Replaces paid hologram dependencies
-- **Independent upgrade tracks** — radius, speed, storage, and fuel-efficiency level separately (no bundled farm levels), each with per-level money, item, and/or XP costs
+- **Independent upgrade tracks** — radius, speed, storage, fuel-efficiency, and tilling level separately (no bundled farm levels), each with per-level money, item, and/or XP costs
 - **Composable outputs** — storage + hopper + auto-sell run simultaneously in a configurable priority order, not one-or-the-other
 - **Offline catch-up** — farms simulate growth while the owner is offline (capped hours per type) instead of hard-pausing
 - **Fuel system** — feed coal/charcoal (configurable) into the farm; efficiency upgrades stretch every item
-- **One config per farm type** — `farm-types/*.yml` defines everything; ships with wheat, oak (trees), sugarcane (stalks), and melon (stem fruit)
-- **In-game GUIs** — main menu, virtual storage (click to withdraw), fuel gauge, upgrade shop, member manager, per-farm tuning knobs, and a **farm shop** (`/farm shop`) where players buy farm items for money, items, or XP levels
+- **One config per farm type** — `farm-types/*.yml` defines everything; ships with 12 types
+- **In-game GUIs** — main menu, paged virtual storage (click to withdraw), fuel gauge, upgrade shop, member manager, farm list with teleport, and a **farm shop** (`/farm shop`) where players buy farms for money, items, or XP levels
 - **SQLite + MySQL** — JDBC drivers shaded into the jar, zero setup; `/farmadmin migrate` copies between backends, `backup`/`restore` with no restart required
 - **Public Java API + events** — `ForgeFarmsAPI` plus `FarmCreateEvent`, `FarmHarvestEvent`, `FarmFuelEmptyEvent`, `FarmStorageFullEvent`, `FarmUpgradeEvent`, `FarmRemoveEvent`
 - **PlaceholderAPI** — `%forgefarms_farms_owned%`, `%forgefarms_farms_limit%`, `%forgefarms_farm_fuel_<id>%`, `%forgefarms_farm_storage_<id>%`
 
 ## Quick start
 
-1. Drop the jar in `plugins/` and restart. Four farm types load out of the box.
-2. `/farm get wheat` — then right-click a block to place the farm.
+1. Drop the jar in `plugins/` and restart. Twelve farm types load out of the box.
+2. `/farm shop` — buy a farm, or `/farm get wheat` for a free one — then right-click a block to place it.
 3. Hold coal and right-click the farm core to fuel it.
 4. Right-click the core to open the management GUI.
 
@@ -56,7 +57,7 @@ An original implementation written from scratch for Paper 26.3. Folia-compatible
 |---|---|---|
 | `/farm get` | Get a farm item. | `/farm get <type> [amount]` |
 | `/farm shop` | Buy farms for money, items, or XP. | `/farm shop` |
-| `/farm list` | List your farms with fuel status. | `/farm list` |
+| `/farm list` | Your farms as a GUI (click to manage, right-click to teleport). | `/farm list` |
 | `/farm menu` | Open the management GUI for a farm. | `/farm menu [id]` |
 | `/farm trust` | Add a member to your nearest farm. | `/farm trust <player> [GUEST\|MEMBER\|ADMIN]` |
 | `/farm untrust` | Remove a member. | `/farm untrust <player>` |
@@ -77,6 +78,7 @@ Aliases: `/farms`, `/forgefarms`.
 | `/farmadmin limits` | Show config limits and status. | `/farmadmin limits` |
 | `/farmadmin remove` | Delete a farm by id. | `/farmadmin remove <id>` |
 | `/farmadmin list` | List all farms (optionally one player's). | `/farmadmin list [player]` |
+| `/farmadmin tune` | In-game farm type editor (behavior, effects, fuel, crops, upgrades, shop, hologram, server settings). | `/farmadmin tune` |
 
 Alias: `/fadm`.
 
@@ -113,7 +115,7 @@ prices:               # per-item auto-sell prices (needs Vault + economy)
   WHEAT: 1.0
 ```
 
-`farm-types/<id>.yml` — one file per farm type: display name, core block, item, base radius / tick interval / growth attempts / storage slots, fuel items and burn time, harvestable blocks with behaviors (`AGEABLE_CROP`, `STEM_FRUIT`, `STALK`), tree-farming toggle with allowed saplings, offline catch-up cap, hologram lines with placeholders (`{owner}`, `{type}`, `{fuel}`, `{fuel_percent}`, `{storage_used}`, `{storage_slots}`, `{radius}`), drama tuning (`age-per-sample`, `harvest-sweep`, `max-harvests-per-tick`, and an `effects:` block with harvest/growth particles and sounds), a `shop:` block (`enabled`, `price-money`, `price-item: {material, amount}`, `price-xp-levels` — all charged together), and the four upgrade tracks with per-level effects and costs.
+`farm-types/<id>.yml` — one file per farm type: display name, core block, item, base radius / tick interval / growth attempts / storage slots, fuel items and burn time, harvestable blocks with behaviors (`AGEABLE_CROP`, `STEM_FRUIT`, `STALK`), tree-farming toggle with allowed saplings, offline catch-up cap, hologram lines with placeholders (`{owner}`, `{type}`, `{fuel}`, `{fuel_percent}`, `{storage_used}`, `{storage_slots}`, `{radius}`), drama tuning (`age-per-sample`, `harvest-sweep`, `max-harvests-per-tick`, and an `effects:` block with harvest/growth particles and sounds), a `shop:` block (`enabled`, `price-money`, `price-item: {material, amount}`, `price-xp-levels` — all charged together), and the five upgrade tracks with per-level effects and costs.
 
 ### Upgrade tracks
 
@@ -123,6 +125,7 @@ Each track is a list of levels; farms buy them independently:
 - **speed** — effect = growth tick interval (lower is faster)
 - **storage** — effect = virtual storage slots
 - **efficiency** — effect = fuel multiplier
+- **tilling** — effect = 1 (auto-plow soil into farmland) or 2 (plow + keep farmland hydrated)
 
 ```yaml
 upgrades:

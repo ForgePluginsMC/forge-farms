@@ -17,6 +17,7 @@ item:
 # Shop entry for /farm shop.
 shop:
   enabled: true
+  category: Trees
   price-money: 3500.0
   price-xp-levels: 15
 farm:
@@ -26,6 +27,7 @@ farm:
   age-per-sample: 1
   harvest-sweep: false
   max-harvests-per-tick: 16
+  till-attempts: 8
 effects:
   harvest-particle: HAPPY_VILLAGER
   harvest-particle-count: 12

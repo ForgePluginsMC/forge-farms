@@ -77,6 +77,22 @@ public final class FarmManager {
         plugin.trust().saveAll();
     }
 
+    /**
+     * Re-apply a farm type's derived stats to its live farms (used after the
+     * admin editor changes a type). Storage slots follow the new config.
+     */
+    public void refreshTypeStats(String typeId) {
+        FarmType type = plugin.config().getType(typeId);
+        if (type == null) {
+            return;
+        }
+        for (Farm farm : farms.values()) {
+            if (farm.typeId().equalsIgnoreCase(typeId)) {
+                farm.setStorageSlots(type.slotsAt(farm.storageLevel()));
+            }
+        }
+    }
+
     public void saveFarm(Farm farm) {
         plugin.database().saveFarm(farm);
     }

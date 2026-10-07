@@ -64,6 +64,7 @@ public final class FarmMembersMenu extends Menu {
         inventory.setItem(49, button(Material.PAPER, "<yellow>Add members</yellow>",
                 "<gray>Use <white>/farm trust <player> [role]</white></gray>",
                 "<gray>Roles: GUEST, MEMBER, ADMIN</gray>"));
+        navRow();
     }
 
     private ItemStack head(UUID id, String name, List<String> lore) {
@@ -82,7 +83,7 @@ public final class FarmMembersMenu extends Menu {
 
     @Override
     public void click(Player viewer, InventoryClickEvent event) {
-        if (!isTopClick(event)) {
+        if (!isTopClick(event) || navClick(viewer, event)) {
             return;
         }
         int slot = event.getRawSlot();
