@@ -21,7 +21,10 @@ import org.jetbrains.annotations.Nullable;
  * {@code /farmadmin reload} re-reads everything.
  */
 public final class ConfigManager {
-    private static final List<String> DEFAULT_TYPES = List.of("wheat.yml", "oak.yml", "sugarcane.yml", "melon.yml");
+    private static final List<String> DEFAULT_TYPES = List.of(
+            "wheat.yml", "carrot.yml", "potato.yml", "beetroot.yml", "netherwart.yml",
+            "sweetberry.yml", "cocoa.yml", "pitcher.yml", "torchflower.yml",
+            "oak.yml", "sugarcane.yml", "melon.yml");
 
     private final ForgeFarms plugin;
     private final Map<String, FarmType> types = new LinkedHashMap<>();
